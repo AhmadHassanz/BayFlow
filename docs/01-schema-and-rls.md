@@ -107,3 +107,22 @@ exact shop, and refuses existing memberships. Role/activation changes cannot
 alter OWNER records or move membership identity/tenant. Owner rows and memberships
 are locked throughout writes. Cloud application remains approval-gated; see
 [B03 verification](../backend/docs/b03-auth-verification.md) for status and recovery.
+
+## B04 Owner Catalog and Public Capacity
+
+Migration `20261009121005_b04_public_catalog_and_slots.sql` adds authenticated
+SECURITY INVOKER `save_shop` and `save_service`, backed by private guarded
+SECURITY DEFINER implementations. Shop creation synchronizes the verified profile
+and inserts shop plus OWNER membership in one transaction. Edits lock/recheck
+authoritative ownership; staff cannot self-promote. Pure validation/grid/DTO
+helpers have no ordinary-user EXECUTE grants. No tables, statuses, RLS policies or
+base-table grants change.
+
+The existing public slot view gains `capacity_remaining` and `local_date`.
+It filters active shops, future instants, current configured working periods and
+the next 14 local calendar days. Capacity is the clamped aggregate of
+non-cancelled bookings; no underlying booking/customer fields are projected.
+Anonymous callers retain only SELECT on public projections. Owner settings saves
+generate deterministic slots with the existing unique `(shop_id,starts_at)` key,
+preserve referenced records and reject changes invalidating non-cancelled future
+appointments. See [B04 evidence](../backend/docs/b04-catalog-verification.md).

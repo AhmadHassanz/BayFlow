@@ -54,6 +54,7 @@ Rules:
 | `PATCH /api/v1/shops/[id]/team/[memberId]` | Edit role or deactivate membership | Owner of shop |
 | `GET /api/v1/shops/[id]/services` | Catalog list | Public safe |
 | `POST /api/v1/shops/[id]/services` | Catalog create | Owner |
+| `PATCH /api/v1/shops/[id]/services/[serviceId]` | Edit or soft-deactivate service | Owner of shop |
 | `GET /api/v1/me` | Current verified user and memberships | Authenticated |
 | `POST /api/v1/bookings` | shopId, slotId, serviceIds, vehicle fields, notes | Authenticated customer; transactional |
 | `GET /api/v1/me/bookings` | Customer bookings, status, pending action | Owning customer |
@@ -170,3 +171,84 @@ membership attachment succeeds and activation is confirmed.
 and redirects only to a local path, defaulting to `/api/v1/me` while UI is absent.
 Invalid/expired links return 400. Public signup accepts only name/email/password;
 it never establishes a shop role. Shop creation remains B04.
+
+## B04 Shop, Catalog and Availability Contract
+
+B04 implements the public directory, detail by ID/slug, services and slots routes,
+plus owner shop creation/settings and service create/edit. The service-member
+PATCH completes the blueprint's service CRUD scope. Shops/services are removed
+from publication with `active: false`; no hard-delete endpoint is provided.
+
+`POST /owner/shops` accepts exactly `{ name, city, address, phone, workingHours,
+timezone?, slotDurationMinutes?, slotCapacity?, active? }` beneath `/api/v1`.
+Defaults: `Asia/Karachi`, 60 minutes, capacity 1, published. The verified identity
+becomes the authoritative owner with an active OWNER membership atomically.
+No submitted owner/user/role/slug is accepted. Slug is generated from the name and
+the shop UUID, is immutable, and allows duplicate business names safely. A public
+identity may create its first shop; a staff identity cannot self-promote. An
+already-authoritative owner may create further shops, including when legitimately
+holding another role elsewhere. Deactivated staff cannot bypass this restriction.
+
+`PATCH /owner/shops/[id]` accepts a nonempty subset of those same settings.
+OWNER membership and ownership are rechecked under SQL locks. All mutations
+require a same-origin Origin header and return the committed DTO. Creation is 201,
+editing is 200, missing identity 401, unauthorized ownership 403, bad input 400.
+Settings conflicting with future non-cancelled bookings return 409
+`SCHEDULE_CONFLICT` without changing configuration or slots.
+
+Working hours use the established seed shape:
+
+```json
+{ "mon": [["09:00", "12:00"], ["13:00", "18:00"]], "sun": [] }
+```
+
+Only `mon`..`sun` keys, at most four ordered non-overlapping intervals per day,
+strict 24-hour `HH:MM` and opening before closing are accepted. Missing keys and
+empty arrays mean closed. Overnight intervals are rejected. Shop name is 1-120,
+city 1-80, address 1-500 characters, trimmed; phone is 7-30 characters with digits,
+optional leading plus and common spacing/separators. Slot duration is 15-240
+integer minutes; capacity is 1-100. The database validates recognized timezone
+names. SQL repeats validation even if a caller bypasses the HTTP handlers.
+
+Shop DTO: `{ id, slug, name, city, address, phone, workingHours, timezone,
+slotDurationMinutes, slotCapacity, logoUrl }`; owner mutation DTO also has `active`.
+Owner IDs, memberships and fabricated ratings are excluded from public DTOs.
+Detail adds `services: { items, page, pageSize, total }` with its first catalog page.
+
+Directory query accepts only `city`, `q`, `page`. City is a case-insensitive exact
+match; q is a literal case-insensitive name substring (wildcards are escaped).
+Page is a positive decimal integer, default 1, maximum 99999. Directory and service
+list return `{ items, page, pageSize: 50, total }`, ordered by name then ID. Services
+accept only `page`. Missing/unpublished shops return 404 for detail/services/slots.
+Malformed UUIDs/slugs, unknown or duplicate query parameters return 400.
+
+Service create accepts `{ name, description?, durationMinutes, basePricePkr?,
+active? }`; edit accepts a nonempty subset. Description defaults to empty (max
+2000), price to null, active to true. Duration is 1-1440 integer minutes; price is
+null or whole PKR 0-999999999. Service DTO: `{ id, shopId, name, description,
+durationMinutes, basePricePkr }`, plus `active` for mutations. Existing services
+and their booking references survive soft deactivation. A foreign service ID in
+an owned shop returns 404; editing another owner's shop returns 403.
+
+Slot reads require `?date=YYYY-MM-DD`, a real date within today through day 13 in
+the shop timezone. Outside that horizon returns 400 `DATE_OUT_OF_RANGE`. Results
+are ordered and contain `{ id, shopId, startsAt, endsAt, capacity,
+capacityRemaining }`; instants are UTC. Closed days return `[]`; full slots remain
+visible with zero remaining capacity. Remaining capacity is
+`max(0, capacity - count(bookings where status != CANCELLED))`, including COMPLETED
+per the frozen booking rule. No customer or booking identifier is exposed.
+
+Owner setup saves regenerate the 14-day horizon, preserve matching slot IDs,
+exclude elapsed times, lunch/closed periods and incomplete final intervals, and
+skip timezone gaps or intervals whose elapsed length changes during DST. Public
+reads never write. Refresh the horizon by resaving current owner settings; no
+background scheduler is introduced. Referenced appointment times survive settings
+changes. If a cancelled booking retains a slot with an incompatible end time,
+that slot is hidden rather than rewritten or offered as a new appointment.
+Public capacity is advisory: B05 must lock the slot and recheck publication,
+current schedule and capacity atomically before booking.
+
+All B04 responses use no-store. Public reads use a session-free anonymous client
+against audited views; owner writes use verified user-scoped clients. B04 has no
+UI or booking mutation. Cloud migration application remains explicitly approved
+per migration; see [B04 evidence](../backend/docs/b04-catalog-verification.md).

@@ -29,6 +29,14 @@ try {
     [`/api/v1/shops/${shop}/team/${shop}`, 'PATCH', 401, origin],
     [`/api/v1/shops/${shop}/team`, 'POST', 403, 'https://attacker.test'],
     ['/auth/callback', 'GET', 400, origin],
+    ['/api/v1/owner/shops', 'POST', 401, origin],
+    [`/api/v1/owner/shops/${shop}`, 'PATCH', 401, origin],
+    [`/api/v1/shops/${shop}/services`, 'POST', 401, origin],
+    [`/api/v1/shops/${shop}/services/${shop}`, 'PATCH', 401, origin],
+    ['/api/v1/owner/shops', 'POST', 403, 'https://attacker.test'],
+    ['/api/v1/shops?page=0', 'GET', 400, origin],
+    ['/api/v1/shops/not-a-uuid', 'GET', 400, origin],
+    [`/api/v1/shops/${shop}/slots?date=2026-02-29`, 'GET', 400, origin],
   ]) {
     const response = await request(path, method, requestOrigin);
     assert.equal(response.status, expected, `${method} ${path}`);
@@ -36,5 +44,5 @@ try {
     assert.equal((await response.json()).data, null);
     console.log(`${method} ${path}: ${expected}, no-store, safe error envelope`);
   }
-  console.log('B03 production HTTP smoke: 5/5 passed (no credentials or Cloud writes).');
+  console.log('B03/B04 production HTTP smoke: 13/13 passed (no credentials or Cloud writes).');
 } finally { child.kill(); }

@@ -74,6 +74,8 @@ export function sqlLiteral(value) {
   if (value === null) return 'null';
   if (typeof value === 'boolean') return value ? 'true' : 'false';
   if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  if (value && typeof value === 'object' && (Array.isArray(value) || Object.getPrototypeOf(value) === Object.prototype))
+    return `${sqlLiteral(JSON.stringify(value))}::jsonb`;
   if (typeof value !== 'string') throw new Error('Unsupported SQL fixture value.');
   return `'${value.replaceAll("'", "''")}'`;
 }

@@ -1,5 +1,7 @@
 # B01 Database Foundation
 
+B04 adds owner catalog RPCs and safe public capacity; see
+[B04 verification](b04-catalog-verification.md) for migration and approval status.
 B03 adds narrowly guarded auth/profile/team RPCs without changing B01 read
 policies or direct table write denial. Its forward migration and Cloud approval
 status are recorded in [B03 verification](b03-auth-verification.md).

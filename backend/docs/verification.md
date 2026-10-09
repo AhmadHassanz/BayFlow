@@ -1,5 +1,7 @@
 # B01 Verification Evidence
 
+For B04's owner/catalog migration and availability checks, see
+[B04 verification](b04-catalog-verification.md).
 For B03's current auth/team migration, application checks and approval-gated
 Cloud session tests, see [B03 verification](b03-auth-verification.md).
 

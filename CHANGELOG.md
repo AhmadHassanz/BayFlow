@@ -1,5 +1,23 @@
 # Changelog
 
+## B04 - 2026-10-09 (Cloud application pending approval)
+
+- Added atomic shop/profile/OWNER membership setup and owner-only shop settings,
+  plus service create/edit/soft-deactivation with strict tenant checks.
+- Added public directory/filter/detail, services and capacity-aware slot APIs with
+  bounded queries, safe camelCase DTOs and anonymous projection reads.
+- Added validated weekly split shifts, timezone-aware 14-day slot generation,
+  repeatable slot IDs and rollback on conflicts with booked future appointments.
+- Preserved all base-table write-denial/RLS boundaries, tables and status values;
+  the public slot view exposes only aggregate remaining capacity and local date.
+- Passed 88 native verification tests, 69 frontend tests, 13 production HTTP smoke checks,
+  lint, both typechecks and production build. Cloud dry-run lists only B04,
+  no seeds/roles. Real B04 Cloud verification remains approval-gated.
+- Added a guarded Cloud catalog suite and current-date RLS fixtures; preserved
+  the user's generated-types modification. No B05 or UI work was added.
+- Reran existing Cloud RLS against B03 schema with the updated fixtures: 81/81
+  passed with successful cleanup. B04 Cloud migration has not been pushed.
+
 ## B03 - 2026-10-09
 
 - Added verified Supabase SSR cookie sessions, signup/login/logout Server Actions,

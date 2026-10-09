@@ -1,6 +1,6 @@
 import 'server-only';
 import { createClient } from '@supabase/supabase-js';
-import type { AppDatabase } from './database.b03';
+import type { AppDatabase } from './database.b04';
 import { publicEnvironment } from './env';
 
 export function createAdminClient() {

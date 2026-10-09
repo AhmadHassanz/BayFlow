@@ -64,13 +64,15 @@ test('all 18 Cloud tables have RLS, one read policy, and no ordinary-user writes
 test('private helper execution and search paths match the audited allowlist',async()=>{
   const versions=await cloud.query('select version from supabase_migrations.schema_migrations order by version');
   const b03=versions.some(row=>row.version==='20261009100642');
+  const b04=versions.some(row=>row.version==='20261009121005');
   const allowed=['has_shop_role','can_read_booking','can_read_estimate','can_read_profile','can_read_vehicle','can_read_notification',
-    ...(b03?['sync_profile_impl','add_staff_membership_impl','edit_staff_membership_impl']:[])];
+    ...(b03?['sync_profile_impl','add_staff_membership_impl','edit_staff_membership_impl']:[]),
+    ...(b04?['save_shop_impl','save_service_impl']:[])];
   const rows=await cloud.query(`select p.proname,p.prosecdef,p.proconfig,
     has_function_privilege('anon',p.oid,'EXECUTE') as anon_execute,
     has_function_privilege('authenticated',p.oid,'EXECUTE') as user_execute
     from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='private'`);
-  assert.equal(rows.length,b03?14:10);
+  assert.equal(rows.length,(b03?14:10)+(b04?5:0));
   for(const row of rows) {
     assert.ok(row.proconfig?.includes('search_path=""'),row.proname);
     assert.equal(row.anon_execute,false,row.proname);
@@ -242,5 +244,6 @@ test('fixture tenant isolation is backed by matching-shop foreign keys',async()=
   const versions=await cloud.query("select version from supabase_migrations.schema_migrations order by version");
   const expected=['20261009090000','20261009090100','20261009090200'];
   if(versions.some(row=>row.version==='20261009100642')) expected.push('20261009100642');
+  if(versions.some(row=>row.version==='20261009121005')) expected.push('20261009121005');
   assert.deepEqual(versions.map(row=>row.version),expected);
 });

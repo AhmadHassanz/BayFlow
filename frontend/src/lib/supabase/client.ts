@@ -1,6 +1,6 @@
 'use client';
 import { createBrowserClient } from '@supabase/ssr';
-import type { AppDatabase } from './database.b03';
+import type { AppDatabase } from './database.b04';
 import { publicEnvironment } from './env';
 
 export function createClient() {

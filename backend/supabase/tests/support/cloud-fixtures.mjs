@@ -37,10 +37,14 @@ export async function provisionIdentities(cloud, actors) {
 
 export function buildFixtures(actors) {
   const uid = (name) => actors[name].id;
+  const nextDate = new Date(); nextDate.setUTCDate(nextDate.getUTCDate()+1);
+  const date = nextDate.toISOString().slice(0,10);
+  const workingHours = Object.fromEntries(['mon','tue','wed','thu','fri','sat','sun'].map(day=>[day,[['09:00','18:00']]]));
   const shops = [1,2,3].map((number) => ({
     id: fixtureId(1,number), owner_user_id: uid(number === 2 ? 'owner-b' : 'owner-a'),
     slug: `b02-isolation-shop-${number}`, name: `B02 Isolation Test Shop ${number}`,
     city: 'Lahore', address: 'Disposable B02 security fixture', phone: '+920000000000', active: true,
+    working_hours:workingHours,
   }));
   const memberships = [];
   const member = (name, shopNumber, role, active = true) => memberships.push({
@@ -52,7 +56,7 @@ export function buildFixtures(actors) {
   }
   member('unassigned-a',1,'TECHNICIAN'); member('qc-other-a',1,'QC'); member('inactive-a',1,'SA',false);
   const services = [1,2,3].map((n) => ({ id:fixtureId(3,n),shop_id:fixtureId(1,n),name:'B02 Test Inspection',duration_minutes:60,active:true }));
-  const slots = [1,2,3].map((n) => ({ id:fixtureId(4,n),shop_id:fixtureId(1,n),starts_at:'2099-01-01T04:00:00Z',ends_at:'2099-01-01T05:00:00Z',capacity:10 }));
+  const slots = [1,2,3].map((n) => ({ id:fixtureId(4,n),shop_id:fixtureId(1,n),starts_at:`${date}T04:00:00Z`,ends_at:`${date}T05:00:00Z`,capacity:10 }));
   const vehicles = [1,2].map((n) => ({ id:fixtureId(5,n),customer_id:uid(`customer-${n===1?'a':'b'}`),registration_plate:`B02-TEST-${n}`,make:'Honda',model:'Civic',year:2016 }));
   const bookings = [1,2,3,4,5].map((n) => {
     const tenant=n<=3?n:1;
