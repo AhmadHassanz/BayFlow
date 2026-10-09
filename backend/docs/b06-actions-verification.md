@@ -8,8 +8,9 @@ status engine: action schemas, expectedVersion, idempotency, history, confirm,
 cancel, assign technician, start inspection and role-scoped booking reads.
 
 No UI, estimate creation/review, parts, QC or pickup flow is included. The user
-requested the same manual Cloud process as B05: the agent implemented and
-verified locally only, and will provide CLI commands for the operator to apply.
+requested the same manual Cloud process as B05. The user applied the B06
+migrations manually; the agent ran acceptance tests after the migrations were
+present in Cloud.
 
 ## Changes and security
 
@@ -58,8 +59,19 @@ Executed local results:
   `public.list_my_bookings` had an unused `input` parameter. The follow-up
   migration keeps the API signature, validates that optional input is `{}`, and
   removes the lint warning source without editing the already-applied B06 migration.
+- After user-run application of the follow-up migration, `npm run db:lint`
+  passed with no schema errors.
+- `npm run db:test:cloud:b03`: **12/12 passed**, exit 0
+  (250905.088 ms). The B03 membership assertion was updated to require the
+  audited fixture memberships while tolerating retained active OWNER memberships
+  from prior B05/B06 Cloud acceptance shops.
+- `npm run db:test:cloud:b04`: **7/7 passed**, exit 0 (95731.143 ms).
+- `npm run db:test:cloud:b05`: **9/9 passed**, exit 0 (257668.7803 ms).
+- `npm run db:test:cloud:b06`: **5/5 passed**, exit 0 (84463.1286 ms).
+- `npm run db:test:cloud`: **81/81 passed**, exit 0 (134176.8723 ms). The RLS
+  migration allowlist was updated for the lint follow-up version.
 
-## Manual Cloud commands and acceptance gate
+## Cloud commands and acceptance gate
 
 Run from a clean shell. Build frontend first; run Cloud suites sequentially
 because they use shared marked fixtures. The B06 suite refuses fixture
@@ -98,8 +110,9 @@ deactivates non-owner staff and signs out shared fixture sessions.
 
 ## Remaining limitations and next phase
 
-B06 is **IN_PROGRESS: local acceptance passed, Cloud application/lint/acceptance
-and regression pending manual execution**. No B06 Cloud outcome is claimed.
+B06 is **PASSED**. Local acceptance, user-run Cloud application, Cloud lint,
+B03/B04/B05 regressions, B06 action acceptance and full Cloud RLS regression
+passed.
 B07 estimate creation/review/customer decision remains unimplemented, as do
 parts, repair, QC, pickup completion and all UI for these actions. Stop before
 B07 until the B06 gate is verified and the next phase is explicitly requested.

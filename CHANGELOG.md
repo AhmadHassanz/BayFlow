@@ -1,6 +1,6 @@
 # Changelog
 
-## B06 - 2026-10-09 (local verification; manual Cloud gate pending)
+## B06 - 2026-10-09
 
 - Added guarded booking action RPCs and Route Handlers for detail/list reads and
   `CONFIRM_BOOKING`, `ASSIGN_TECHNICIAN`, `START_INSPECTION`, `CANCEL_BOOKING`.
@@ -10,8 +10,9 @@
   safe 400/403/404/409/422 error mapping.
 - Local verification passed 110 native tests, 122 frontend tests and 20 production
   HTTP smoke checks; frontend lint/build and both typechecks exited 0.
-- Added guarded `db:test:cloud:b06`; no B06 Cloud migration, lint or Cloud test
-  command was executed by the agent.
+- User-run Cloud review/dry-run/push applied B06 and the lint follow-up migration.
+  Cloud lint passed; B03 auth 12/12, B04 catalog 7/7, B05 booking 9/9,
+  B06 actions 5/5 and RLS regression 81/81 passed.
 
 ## B05 - 2026-10-09
 

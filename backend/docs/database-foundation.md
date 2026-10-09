@@ -58,9 +58,8 @@ npx --no-install supabase db push
 Do not include the seed in Cloud pushes. Use Auth Admin tooling for a separately
 authorized disposable Cloud demo in B11. No Cloud project was linked or changed
 by the original B01 implementation. The user subsequently linked Cloud project
-`tlqvlsrmxueuuzxyltej`; B01-B05 are applied and B06 is pending manual Cloud
-application. B02 verified real Auth/REST using separate security fixtures, not
-the local seed or B11 demo.
+`tlqvlsrmxueuuzxyltej`; B01-B06 are applied and verified in Cloud. B02 verified
+real Auth/REST using separate security fixtures, not the local seed or B11 demo.
 Keep passwords, access tokens and database URLs out of Git and chat.
 
 After reviewed Cloud migration application, `npm run db:lint` lints the linked

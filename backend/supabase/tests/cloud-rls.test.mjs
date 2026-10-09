@@ -251,5 +251,6 @@ test('fixture tenant isolation is backed by matching-shop foreign keys',async()=
   if(versions.some(row=>row.version==='20261009121005')) expected.push('20261009121005');
   if(versions.some(row=>row.version==='20261009140203')) expected.push('20261009140203');
   if(versions.some(row=>row.version==='20261009151303')) expected.push('20261009151303');
+  if(versions.some(row=>row.version==='20261009153959')) expected.push('20261009153959');
   assert.deepEqual(versions.map(row=>row.version),expected);
 });

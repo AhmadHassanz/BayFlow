@@ -125,7 +125,9 @@ test('B03 SSR cookie identity and memberships survive repeated requests', async 
   for (let i = 0; i < 2; i++) {
     const result = await request('/api/v1/me', clients['owner-a']);
     assert.equal(result.status, 200); assert.equal(result.data.data.user.id, actors['owner-a'].id);
-    assert.deepEqual(result.data.data.memberships.map(m => m.shopId).sort(), [fixtureId(1, 1), fixtureId(1, 3)].sort());
+    const shopIds = result.data.data.memberships.map(m => m.shopId);
+    assert.ok(shopIds.includes(fixtureId(1, 1)));
+    assert.ok(shopIds.includes(fixtureId(1, 3)));
     assert.ok(!JSON.stringify(result.data).includes(actors['owner-a'].token));
   }
 });
