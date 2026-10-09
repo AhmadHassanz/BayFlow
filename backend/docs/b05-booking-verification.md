@@ -10,8 +10,9 @@ lint passed, catalog 7/7 and post-migration RLS 81/81 passed with cleanup.
 Implement only POST /api/v1/bookings, a narrow transactional booking RPC, private
 idempotency storage, validation/types, meaningful native/API tests and a manual
 Cloud acceptance suite. No UI, B06 transitions or extra backend server.
-The user subsequently requested local implementation and will apply Cloud changes
-manually. No B05 Cloud command, migration application or Cloud test was executed.
+The user subsequently requested local implementation and manual Cloud application.
+The user ran the B05 review/dry-run/push gate; the agent ran acceptance tests
+after the migration was present in Cloud.
 
 ## Changes and security
 
@@ -72,7 +73,7 @@ Executed local results:
   Includes strict payload, 401/403/409, single-RPC, narrow DTO, replay status and
   rate-limit tests, plus existing auth/catalog regressions.
 - Frontend typecheck and backend typecheck: exit 0.
-- Cloud B05/RLS JavaScript syntax checks: exit 0. These are not Cloud acceptance.
+- Cloud B05/RLS JavaScript syntax checks: exit 0 before manual application.
 - Frontend ESLint and production Next.js build: exit 0; the build compiled
   /api/v1/bookings and all existing B03/B04 routes.
 - `npm run test:smoke`: **15/15 passed**, exit 0. Includes production booking
@@ -80,7 +81,29 @@ Executed local results:
   and performs no Cloud writes.
 - `git diff --check`: passed. Scoped checkpoint excludes the user's types file.
 
-## Manual Cloud commands and acceptance gate
+Executed Cloud results after user-run migration application:
+
+- User confirmed the linked project reference `tlqvlsrmxueuuzxyltej`, migration
+  list showed only B05 pending, and `supabase db push --dry-run` reported only
+  `20261009140203_b05_transactional_booking.sql`.
+- User then applied B05 manually; no seed or role push was reported.
+- `npm run db:lint`: passed before the failing/passing test reruns.
+- `npm run db:test:cloud:b03`: **12/12 passed**, exit 0
+  (173848.9367 ms).
+- `npm run db:test:cloud:b04`: **7/7 passed**, exit 0
+  (114097.9286 ms).
+- Initial B05 Cloud runs exposed a test harness typo in `effects()`: the vehicle
+  count subquery missed a closing parenthesis, causing CLI SQL syntax errors near
+  `vehicles`. The migration and API path were not changed.
+- The shared Cloud CLI helper was hardened to parse JSON when Supabase prints a
+  progress banner before it and to retry transient `db query` calls without
+  exposing CLI output.
+- After rebuilding the frontend, `npm run db:test:cloud:b05`: **9/9 passed**,
+  exit 0 (236612.1884 ms).
+- `npm run db:test:cloud`: **81/81 passed**, exit 0 (135183.2019 ms), with B02
+  shops hidden, staff deactivated and Auth sessions signed out.
+
+## Cloud commands and acceptance gate
 
 Build the current frontend first; run Cloud suites sequentially because they use
 shared marked fixtures. The B05 suite refuses fixture provisioning until the
@@ -120,8 +143,8 @@ remain. Cleanup errors fail the suite and require operator review.
 
 ## Remaining limitations and next phase
 
-B05 is **IN_PROGRESS: local acceptance passed, Cloud application/lint/acceptance
-and regression pending manual execution**. No Cloud outcome is claimed.
+B05 is **PASSED**. Local acceptance, user-run Cloud application, Cloud lint,
+B03/B04 regressions, B05 booking acceptance and full Cloud RLS regression passed.
 The existing B04 owner-save horizon refresh and retained cancelled-slot behavior
 remain. HTTP throttling is per-process; direct RPC uses SQL authorization and
 transactional validation but has no distributed throttle. Receipt payloads

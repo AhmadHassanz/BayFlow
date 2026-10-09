@@ -1,6 +1,6 @@
 # Changelog
 
-## B05 - 2026-10-09 (local verification; manual Cloud gate pending)
+## B05 - 2026-10-09
 
 - Added POST /api/v1/bookings using verified cookie identity and one user-scoped
   transactional PostgreSQL RPC; no Admin client, UI or B06 actions.
@@ -12,10 +12,10 @@
 - Added native capacity/retry/schedule races and rollback/ownership checks,
   frontend/API tests, production smoke and a guarded operator-run Cloud suite.
   Existing Cloud RLS allowlists recognize the optional B05 migration.
-- No B05 Cloud migration, lint or test command was executed. Actual local results
-  and manual application/acceptance commands are in the B05 verification guide.
 - Local verification passed 104 native tests, 110 frontend tests and 15 production
   HTTP smoke checks; frontend lint/build and both typechecks exited 0.
+- User-run Cloud review/dry-run/push applied only B05. Cloud lint passed; B03
+  auth 12/12, B04 catalog 7/7, B05 booking 9/9 and RLS regression 81/81 passed.
 
 ## B04 - 2026-10-09
 

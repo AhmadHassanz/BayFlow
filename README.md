@@ -2,12 +2,11 @@
 
 BayFlow is a multi-tenant auto repair workflow platform for customers, garage owners, service advisors, technicians, parts staff, and QC inspectors.
 
-**Phase B05: implemented locally; manual Cloud application and acceptance pending.**
-B01-B04 are verified in Cloud. B05 adds atomic customer booking creation with
+**Phase B05: Cloud verified; B06 not started.**
+B01-B05 are verified in Cloud. B05 adds atomic customer booking creation with
 capacity locks, own-vehicle validation, history, SA notices and retry receipts.
-No B05 Cloud commands were executed; the user will apply the migration manually.
 UI and B06 transitions remain outside this phase. See
-[B05 evidence and manual commands](backend/docs/b05-booking-verification.md),
+[B05 evidence](backend/docs/b05-booking-verification.md),
 [B04 evidence](backend/docs/b04-catalog-verification.md) and
 [B03 evidence](backend/docs/b03-auth-verification.md).
 
@@ -84,11 +83,10 @@ locally and in Cloud. Cloud lint reports no schema errors.
 B04 migration `20261009121005_b04_public_catalog_and_slots.sql` is applied in
 Cloud after explicit approval. Cloud lint, 7/7 catalog tests and 81/81
 post-migration RLS regression tests passed, including fixture cleanup.
-B05 migration `20261009140203_b05_transactional_booking.sql` is verified only in
-the disposable native harness and has **not** been pushed to Cloud. It adds one
-private receipt table and the narrow booking RPC; all 18 public tables retain
-their existing RLS/write-denial boundaries. Manual review, dry-run, push and
-sequential acceptance commands are in the B05 verification guide.
+B05 migration `20261009140203_b05_transactional_booking.sql` is applied in Cloud
+after user-run review/dry-run/push. Cloud lint, 9/9 booking acceptance and 81/81
+RLS regression tests passed. It adds one private receipt table and the narrow
+booking RPC; all 18 public tables retain their existing RLS/write-denial boundaries.
 
 Supabase CLI generated [database types](frontend/src/lib/supabase/database.types.ts)
 from the linked Cloud schema. Run
@@ -122,9 +120,8 @@ the approved B04 Cloud migration and a frontend production build. Owner setup
 saves refresh the next 14 local calendar days; no background scheduler is added.
 
 B05 adds `npm run db:test:cloud:b05`, guarded on its exact migration version.
-It exercises real HTTP booking/retry/capacity/ownership behavior after manual
-application. Build frontend first and run all Cloud suites sequentially. No B05
-Cloud suite result is claimed before the operator runs it.
+It exercises real HTTP booking/retry/capacity/ownership behavior against the
+linked Cloud project. Build frontend first and run all Cloud suites sequentially.
 
 ## Demo credentials
 
@@ -166,10 +163,9 @@ Test identities and immutable audit fixtures remain in Cloud; test shops are
 hidden and test staff deactivated after the run. Distributed Auth/staff
 provisioning failures can require operator recovery; see the B03 guide. Workflow
 transitions, non-booking idempotency and remaining workflow RPCs belong to later
-phases. B04 Cloud acceptance passed; Vercel/browser integration remains a separate gate.
+phases. B04 and B05 Cloud acceptance passed; Vercel/browser integration remains a separate gate.
 Referenced cancelled appointments can keep a changed slot start unavailable;
 the B04 guide records schedule preservation and horizon-refresh behavior.
-B05 local acceptance passed; its Cloud acceptance is pending manual execution.
 Booking receipts retain canonical private payloads without automatic expiration;
 HTTP booking throttling is per-process. Booking creation never edits saved
 vehicles; conflicting details for an existing own plate return 409. See docs/02.

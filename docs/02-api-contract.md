@@ -304,4 +304,4 @@ All business effects are one SQL transaction, including profile/vehicle creation
 booking, service relations, history, active-SA notices and receipt. No separate
 reservation count or intermediate booking status is introduced. B06 read lists,
 detail/actions and UI remain unimplemented. The B05 Cloud migration/test gate
-is pending manual operator execution.
+passed after user-run application.

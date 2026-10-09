@@ -48,7 +48,7 @@ async function effects() {
     (select count(*)::integer from public.booking_history where shop_id=${sqlLiteral(shop.id)}) history,
     (select count(*)::integer from public.notifications where shop_id=${sqlLiteral(shop.id)}) notices,
     (select count(*)::integer from private.booking_receipts where payload->>'shopId'=${sqlLiteral(shop.id)}) receipts,
-    (select count(*)::integer from public.vehicles where customer_id in (${['customer-a','customer-b','outsider'].map(n=>sqlLiteral(actors[n].id)).join(',')}) vehicles;`))[0];
+    (select count(*)::integer from public.vehicles where customer_id in (${['customer-a','customer-b','outsider'].map(n=>sqlLiteral(actors[n].id)).join(',')})) vehicles;`))[0];
 }
 before(async()=>{
   cloud=await connectCloud();

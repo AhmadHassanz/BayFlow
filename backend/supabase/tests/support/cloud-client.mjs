@@ -7,17 +7,40 @@ const execute = promisify(execFile);
 const backend = fileURLToPath(new URL('../../../', import.meta.url));
 const cliPath = fileURLToPath(new URL('../../../node_modules/supabase/dist/supabase.js', import.meta.url));
 
+function parseCliJson(stdout) {
+  const trimmed = stdout.trim();
+  if (!trimmed) throw new Error('Empty CLI output.');
+  try { return JSON.parse(trimmed); } catch { /* Supabase can print progress before JSON. */ }
+  for (const marker of ['\n{', '\n[']) {
+    const index = trimmed.indexOf(marker);
+    if (index >= 0) return JSON.parse(trimmed.slice(index + 1));
+  }
+  throw new Error('Unparseable CLI JSON output.');
+}
+
+async function cliOnce(args) {
+  const result = await execute(process.execPath, [cliPath, ...args], {
+    cwd: backend, encoding: 'utf8', timeout: 60000, maxBuffer: 4 * 1024 * 1024,
+    windowsHide: true,
+  });
+  return parseCliJson(result.stdout);
+}
+
 export async function cli(args) {
-  try {
-    const result = await execute(process.execPath, [cliPath, ...args], {
-      cwd: backend, encoding: 'utf8', timeout: 60000, maxBuffer: 4 * 1024 * 1024,
-      windowsHide: true,
-    });
-    return JSON.parse(result.stdout);
-  } catch {
+  const attempts = args[0] === 'db' && args[1] === 'query' ? 3 : 1;
+  let lastError;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try { return await cliOnce(args); }
+    catch (error) {
+      lastError = error;
+      if (attempt < attempts) await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+    }
+  }
+  if (lastError) {
     // CLI output can contain sensitive credentials. Do not relay it from a test.
     throw new Error(`Supabase CLI ${args[0]} ${args[1] ?? ''} failed. Check CLI login/link separately.`);
   }
+  throw new Error(`Supabase CLI ${args[0]} ${args[1] ?? ''} failed. Check CLI login/link separately.`);
 }
 
 export async function connectCloud() {

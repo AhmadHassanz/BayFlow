@@ -164,4 +164,4 @@ CREATE_BOOKING history event and one NEW_BOOKING notice per active same-shop SA,
 then the receipt. A same-key/same-payload retry returns the current owning
 booking state before schedule/capacity checks; a changed payload conflicts.
 See [B05 evidence](../backend/docs/b05-booking-verification.md). Cloud application
-and acceptance are operator-run and pending; no B06 transitions are added.
+and acceptance passed; no B06 transitions are added.
