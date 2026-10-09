@@ -1,5 +1,9 @@
 # B01 Database Foundation
 
+B05 adds a private CREATE_BOOKING receipt table and atomic booking RPC without
+changing the 18 public tables or their RLS policies. Its migration is local-only
+until the operator applies it manually; see [B05 verification](b05-booking-verification.md).
+
 B04 adds owner catalog RPCs and safe public capacity; see
 [B04 verification](b04-catalog-verification.md) for migration and approval status.
 B03 adds narrowly guarded auth/profile/team RPCs without changing B01 read

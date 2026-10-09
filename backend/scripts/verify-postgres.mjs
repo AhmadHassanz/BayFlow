@@ -69,7 +69,9 @@ try {
   // The CLI calls any explicit URL "remote", even for this generated loopback URL.
   // This target is always a newly created disposable local cluster, never Cloud.
   await run(cli, ['db', 'reset', '--db-url', databaseUrl, '--yes']);
-  await run('--test', ['tests/*.test.mjs'], {
+  // Race suites use multiple real connections internally and commit isolated
+  // fixtures; keep files sequential so unrelated visibility fixtures stay stable.
+  await run('--test', ['--test-concurrency=1', 'tests/*.test.mjs'], {
     BAYFLOW_TEST_DB_URL: databaseUrl,
   });
   if (process.argv.includes('--generate-types')) {

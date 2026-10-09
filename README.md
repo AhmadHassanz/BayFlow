@@ -2,10 +2,12 @@
 
 BayFlow is a multi-tenant auto repair workflow platform for customers, garage owners, service advisors, technicians, parts staff, and QC inspectors.
 
-**Phase B04: passed local and Cloud verification.**
-B01-B04 are verified in Cloud. B04 adds public shops/services/availability,
-transactional owner shop setup, service management and deterministic 14-day slots.
-Booking mutations and UI remain outside this phase. See
+**Phase B05: implemented locally; manual Cloud application and acceptance pending.**
+B01-B04 are verified in Cloud. B05 adds atomic customer booking creation with
+capacity locks, own-vehicle validation, history, SA notices and retry receipts.
+No B05 Cloud commands were executed; the user will apply the migration manually.
+UI and B06 transitions remain outside this phase. See
+[B05 evidence and manual commands](backend/docs/b05-booking-verification.md),
 [B04 evidence](backend/docs/b04-catalog-verification.md) and
 [B03 evidence](backend/docs/b03-auth-verification.md).
 
@@ -82,6 +84,11 @@ locally and in Cloud. Cloud lint reports no schema errors.
 B04 migration `20261009121005_b04_public_catalog_and_slots.sql` is applied in
 Cloud after explicit approval. Cloud lint, 7/7 catalog tests and 81/81
 post-migration RLS regression tests passed, including fixture cleanup.
+B05 migration `20261009140203_b05_transactional_booking.sql` is verified only in
+the disposable native harness and has **not** been pushed to Cloud. It adds one
+private receipt table and the narrow booking RPC; all 18 public tables retain
+their existing RLS/write-denial boundaries. Manual review, dry-run, push and
+sequential acceptance commands are in the B05 verification guide.
 
 Supabase CLI generated [database types](frontend/src/lib/supabase/database.types.ts)
 from the linked Cloud schema. Run
@@ -113,6 +120,11 @@ B04's `npm run db:test:cloud:b04` exercises catalog/owner operations against
 production Next.js without an Admin key in the application server. It requires
 the approved B04 Cloud migration and a frontend production build. Owner setup
 saves refresh the next 14 local calendar days; no background scheduler is added.
+
+B05 adds `npm run db:test:cloud:b05`, guarded on its exact migration version.
+It exercises real HTTP booking/retry/capacity/ownership behavior after manual
+application. Build frontend first and run all Cloud suites sequentially. No B05
+Cloud suite result is claimed before the operator runs it.
 
 ## Demo credentials
 
@@ -153,11 +165,14 @@ B02 additionally verifies real Cloud sign-in, REST authorization and SQL lint.
 Test identities and immutable audit fixtures remain in Cloud; test shops are
 hidden and test staff deactivated after the run. Distributed Auth/staff
 provisioning failures can require operator recovery; see the B03 guide. Workflow
-RPCs, idempotency and transition guards belong to later phases. B04 Cloud
-acceptance passed; Vercel/browser integration remains a separate gate.
+transitions, non-booking idempotency and remaining workflow RPCs belong to later
+phases. B04 Cloud acceptance passed; Vercel/browser integration remains a separate gate.
 Referenced cancelled appointments can keep a changed slot start unavailable;
 the B04 guide records schedule preservation and horizon-refresh behavior.
-B05 has not started.
+B05 local acceptance passed; its Cloud acceptance is pending manual execution.
+Booking receipts retain canonical private payloads without automatic expiration;
+HTTP booking throttling is per-process. Booking creation never edits saved
+vehicles; conflicting details for an existing own plate return 409. See docs/02.
 
 ```text
 frontend/
@@ -167,7 +182,7 @@ frontend/
   e2e/
 backend/
   supabase/{config.toml,seed.sql,migrations/,tests/}
-  docs/{database-foundation.md,verification.md,b02-security-verification.md,b03-auth-verification.md,b04-catalog-verification.md}
+  docs/{database-foundation.md,verification.md,b02-security-verification.md,b03-auth-verification.md,b04-catalog-verification.md,b05-booking-verification.md}
   scripts/{generate-types.mjs,verify-postgres.mjs}
   tests/{helpers.mjs,foundation.test.mjs,tenant-context.test.mjs}
   package.json

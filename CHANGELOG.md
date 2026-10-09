@@ -1,5 +1,22 @@
 # Changelog
 
+## B05 - 2026-10-09 (local verification; manual Cloud gate pending)
+
+- Added POST /api/v1/bookings using verified cookie identity and one user-scoped
+  transactional PostgreSQL RPC; no Admin client, UI or B06 actions.
+- Added slot/shop locking and current schedule/horizon/capacity checks,
+  active same-shop services, exact own-vehicle reuse and atomic PENDING creation,
+  history, active-SA notifications and private actor/key idempotency receipts.
+- Added strict request/DTO contracts, safe conflict mapping, a bounded per-process
+  booking limiter and an additive types overlay preserving the user's types file.
+- Added native capacity/retry/schedule races and rollback/ownership checks,
+  frontend/API tests, production smoke and a guarded operator-run Cloud suite.
+  Existing Cloud RLS allowlists recognize the optional B05 migration.
+- No B05 Cloud migration, lint or test command was executed. Actual local results
+  and manual application/acceptance commands are in the B05 verification guide.
+- Local verification passed 104 native tests, 110 frontend tests and 15 production
+  HTTP smoke checks; frontend lint/build and both typechecks exited 0.
+
 ## B04 - 2026-10-09
 
 - Applied the reviewed B04 migration to Cloud with explicit user approval;

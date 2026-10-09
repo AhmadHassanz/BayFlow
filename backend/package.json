@@ -9,12 +9,13 @@
   "scripts": {
     "db:reset": "node scripts/verify-postgres.mjs",
     "db:lint": "supabase db lint --linked --level warning --fail-on warning",
-    "db:test": "node --test tests/*.test.mjs",
+    "db:test": "node --test --test-concurrency=1 tests/*.test.mjs",
     "db:types": "node scripts/generate-types.mjs",
     "db:verify:postgres": "node scripts/verify-postgres.mjs",
     "db:test:cloud": "node --test --test-concurrency=1 supabase/tests/cloud-rls.test.mjs",
     "db:test:cloud:b03": "node --test --test-concurrency=1 supabase/tests/cloud-auth.test.mjs",
     "db:test:cloud:b04": "node --test --test-concurrency=1 supabase/tests/cloud-catalog.test.mjs",
+    "db:test:cloud:b05": "node --test --test-concurrency=1 supabase/tests/cloud-bookings.test.mjs",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

@@ -83,7 +83,7 @@ Cloud Auth/REST without requiring schema changes; see the
   and `purchase_order_status`; Customer is global identity, not a shop role.
 - Generated types live in `frontend/src/lib/supabase/database.types.ts` and are
   emitted by the Supabase CLI from applied PostgreSQL schema.
-- Active membership/role validation on transitions, idempotency receipts, locking,
+- Active membership/role validation on transitions, non-booking idempotency receipts, locking,
   sent-estimate immutability and exactly-once release remain future RPC work.
 - `estimate_items` and `purchase_order_items` include `shop_id` to support composite
   FKs and tenant policies; `booking_services` has its own UUID primary key.
@@ -126,3 +126,42 @@ Anonymous callers retain only SELECT on public projections. Owner settings saves
 generate deterministic slots with the existing unique `(shop_id,starts_at)` key,
 preserve referenced records and reject changes invalidating non-cancelled future
 appointments. See [B04 evidence](../backend/docs/b04-catalog-verification.md).
+
+## B05 Atomic Booking Creation
+
+Migration `20261009140203_b05_transactional_booking.sql` adds public SECURITY
+INVOKER `create_booking(input jsonb)` and private guarded SECURITY DEFINER
+`create_booking_impl`, both authenticated-only. A private DTO helper has no
+ordinary-user EXECUTE. All search paths are empty and references qualified.
+No public table, status, base-table grant or RLS read policy changes.
+
+`private.booking_receipts` is the dedicated CREATE_BOOKING receipt namespace.
+Its primary key is `(customer_id, idempotency_key)`; it stores the canonical
+validated payload, unique booking FK and `created_at`. The action is implicit in
+this booking-only table, satisfying uniqueness by actor/action/key. RLS is
+enabled with no policies and all ordinary-user table privileges revoked. It is
+outside the exposed API schemas. Receipts and business effects commit together;
+failed intents leave no receipt. No automatic receipt expiration is implemented.
+
+The operation requires READ COMMITTED and locks the Auth identity, then shop
+FOR SHARE, then appointment slot FOR UPDATE. The shop lock follows B04's
+shop-before-slot order and freezes publication, schedule, services and staff
+changes. After lock acquisition it uses the current clock to recheck the local
+14-day horizon, configured grid, duration/capacity and all non-CANCELLED bookings.
+It validates active same-shop services before any business insert. The identity
+lock serializes same-actor retries and own-vehicle lookup/creation; different
+customers contend on the authoritative slot lock.
+
+Only actor-owned vehicles with an uppercased/trimmed matching plate are eligible
+for reuse, and their make/model/year/color/mileage must exactly match the
+validated details. Existing records are never updated by this operation. A plate
+belonging to another customer does not establish ownership; a separate actor-owned
+vehicle can be created. The frozen payload accepts vehicle fields, not vehicle
+IDs. New vehicles synchronize the actor's profile within the same transaction.
+
+The operation inserts PENDING/state_version 0, selected booking_services, one
+CREATE_BOOKING history event and one NEW_BOOKING notice per active same-shop SA,
+then the receipt. A same-key/same-payload retry returns the current owning
+booking state before schedule/capacity checks; a changed payload conflicts.
+See [B05 evidence](../backend/docs/b05-booking-verification.md). Cloud application
+and acceptance are operator-run and pending; no B06 transitions are added.

@@ -252,3 +252,56 @@ All B04 responses use no-store. Public reads use a session-free anonymous client
 against audited views; owner writes use verified user-scoped clients. B04 has no
 UI or booking mutation. Cloud migration application remains explicitly approved
 per migration; see [B04 evidence](../backend/docs/b04-catalog-verification.md).
+
+## B05 Booking Creation Contract
+
+`POST /api/v1/bookings` implements the frozen Booking Payload above. Auth is
+verified with `getUser()` and the operation uses the user's JWT. No Admin client
+is involved. Same-origin Origin is required; missing/cross-origin requests get
+403. A missing/invalid same-origin session gets 401. Strict input validation
+rejects customer/role/status/capacity/password fields and arbitrary vehicle IDs.
+Service IDs are required as an array (0-50 distinct UUIDs); notes default to empty,
+trimmed with a 4000-character maximum. When no service is selected, meaningful
+notes require at least 10 characters including at least five letters/digits.
+
+Vehicle plate is trimmed and uppercased, 2-20 ASCII letters/digits/spaces/hyphens,
+starting with a letter/digit. Make/model are trimmed 1-80 characters; year is an
+integer 1886-9999, matching the database's frozen range. Color defaults to null
+or is trimmed 1-40 characters. mileageKm defaults to null or is an integer
+0-2147483647, mapped to the existing `vehicles.mileage` column. An exact own
+plate/details match reuses the saved vehicle without updating it. A changed
+detail for an existing own plate returns 409 VEHICLE_CONFLICT. A foreign plate
+does not identify another customer's asset for reuse. Duplicate legacy own plates
+resolve deterministically by created_at then ID; only an exact detail match is
+accepted. No vehicle-edit or vehicle-ID payload is added.
+
+Creation returns 201 with `{ id, shopId, customerId, vehicleId, slotId, status,
+stateVersion, symptomNotes, serviceIds, createdAt }` in the normal data envelope.
+Status is PENDING and version is 0 on creation; all values come from committed
+database state. A successful replay returns 200 and the current booking state,
+even if that original slot is now full or the shop is unpublished. No duplicate
+vehicle, service relation, history, notification or receipt is created.
+
+Idempotency keys are UUIDs scoped to the verified actor and CREATE_BOOKING.
+Canonical payload comparison normalizes UUID casing, service order, trimmed text,
+plate casing and omitted nullable vehicle defaults. All remaining differences
+conflict with 409 IDEMPOTENCY_CONFLICT. Failed operations create no receipt and
+may retry the same key. Use a new key for a changed booking intent. Receipts retain
+validated vehicle/symptom data privately and have no automatic expiration.
+
+Shop publication, slot/shop relationship, current hours/grid, local horizon,
+elapsed time and capacity are rechecked under SQL locks. Missing/unpublished shop
+or missing/foreign slot returns safe 404 NOT_FOUND. Full, elapsed, closed,
+out-of-horizon or configuration-mismatched slots return 409 SLOT_CONFLICT.
+Inactive/missing/foreign services and invalid fields return 400 INVALID_INPUT.
+Serialization/deadlock/lock conflicts return 409 BOOKING_CONFLICT and permit
+retry with the same key. Other database failures return a safe 500. Responses
+are private/no-store and omit SQL details. A bounded per-process limiter allows
+30 requests/minute per identity and returns 429 RATE_LIMITED; distributed limits
+and limits on direct RPC callers are not claimed.
+
+All business effects are one SQL transaction, including profile/vehicle creation,
+booking, service relations, history, active-SA notices and receipt. No separate
+reservation count or intermediate booking status is introduced. B06 read lists,
+detail/actions and UI remain unimplemented. The B05 Cloud migration/test gate
+is pending manual operator execution.

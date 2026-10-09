@@ -96,3 +96,12 @@ Required side branches:
 - QC fails: `QC_IN_PROGRESS -> IN_REPAIR -> QC_PENDING -> QC_IN_PROGRESS -> READY_FOR_PICKUP`.
 - Ready notification is same-state and idempotent.
 - Terminal statuses are immutable.
+
+## B05 Creation Boundary
+
+Creation is the audited CREATE_BOOKING action from null to PENDING with version
+0. It inserts history, active same-shop SA notifications and an actor-scoped
+idempotency receipt in the same transaction. Same-key retries return the current
+owning booking without another creation event or version increment. The shop is
+locked before the slot so owner schedule saves and bookings serialize consistently.
+No confirm, cancel, assign or other B06 action endpoint is implemented by B05.
