@@ -83,8 +83,8 @@ Cloud Auth/REST without requiring schema changes; see the
   and `purchase_order_status`; Customer is global identity, not a shop role.
 - Generated types live in `frontend/src/lib/supabase/database.types.ts` and are
   emitted by the Supabase CLI from applied PostgreSQL schema.
-- Active membership/role validation on transitions, non-booking idempotency receipts, locking,
-  sent-estimate immutability and exactly-once release remain future RPC work.
+- B06-B08 implement guarded membership/role checks, workflow locks, sent estimate
+  snapshots and exactly-once allocation/release. Non-booking receipts remain future work.
 - `estimate_items` and `purchase_order_items` include `shop_id` to support composite
   FKs and tenant policies; `booking_services` has its own UUID primary key.
 - Safe public views deliberately bypass base-table RLS via audited projections;
@@ -185,5 +185,37 @@ status, version, history, notifications and receipt atomically. No generic
 return guarded projections for authorized customers and shop roles. Customers see
 their own jobs; OWNER/SA see shop jobs; technicians see assigned jobs. Unassigned
 or inactive staff receive hidden/not-found behavior. See
-[B06 evidence](../backend/docs/b06-actions-verification.md). Cloud application
-and acceptance are operator-run and pending; no B07 estimate flow is added.
+[B06 evidence](../backend/docs/b06-actions-verification.md). B06 and B07 Cloud
+application and acceptance have passed; see the B07 verification notes.
+
+## B08 Parts and Inventory Operations
+
+`20261009180000_b08_parts_workflow.sql` extends the existing private action
+receipt allowlist and booking action implementation. It uses the B01 inventory,
+purchase-order, order-item and allocation tables. No table, status, RLS policy
+or direct table write grant is added. The existing public invoker action wrapper
+continues to call its guarded private definer implementation.
+`20261009180100_b08_lint_parts_payload.sql` is a forward correction for normalizer
+volatility/JSON initialization and the same-state shortage-order notification.
+
+Approved estimate requirements aggregate PART lines by part ID. The action
+locks the actor identity, booking, actor/target memberships and required inventory
+rows in UUID order. Parts transactions require READ COMMITTED so stock is checked
+again after lock acquisition. Assigned active same-shop PARTS staff alone can
+order, receive, mark readiness or allocate; OWNER/SA can only assign the parts
+person. Existing approved SKUs remain usable after catalog soft deactivation.
+
+Ordering changes no stock and cannot exceed the job's uncovered shortage after
+existing unreceived order quantities. Receiving increments both order-item
+received quantities and inventory atomically. Allocation verifies every required
+part, deducts stock, creates one allocation per part and enters IN_REPAIR in the
+same transaction. Labour-only jobs create no allocation rows. Cancellation
+releases any pre-repair reservation once, and refuses jobs whose history already
+contains IN_REPAIR. B08 itself creates allocations only when repair starts.
+
+Inventory RPCs `save_inventory_part` and `list_inventory` are authenticated-only
+invoker wrappers over guarded private definers. Only OWNER/PARTS can use them.
+New SKUs may specify opening stock; catalog updates cannot overwrite stock.
+SKU uniqueness protects repeated creates. Helpers have no client EXECUTE grants.
+An additive `database.b08.ts` RPC type overlay preserves the user's generated
+types file. See [B08 verification](../backend/docs/b08-parts-verification.md).

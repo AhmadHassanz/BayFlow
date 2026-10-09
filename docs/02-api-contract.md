@@ -353,4 +353,79 @@ line totals and subtotal inside the transaction. Sent, approved and rejected
 versions are never mutated silently; only the current review draft can be edited
 while sending.
 
+## B08 Parts Workflow
+
+B08 implements the inventory, purchase-order, receipt and allocation endpoints
+already listed above. These use verified cookie sessions, private/no-store
+responses and same-origin mutation checks. Booking mutations delegate to the
+same `apply_booking_action` RPC as B06/B07 and return authoritative booking detail
+(201 new intent, 200 replay). They share the actor/key receipt namespace, so a
+retry through either the dedicated endpoint or `/actions` has identical effects.
+
+Added `/actions` names and payloads:
+
+- `ASSIGN_PARTS`: `{ partsUserId }`; OWNER/SA assigns an active same-shop PARTS
+  member, ESTIMATE_APPROVED -> PARTS_PENDING.
+- `MARK_PARTS_READY`: `{}`; assigned parts person checks stock, PARTS_PENDING or
+  PARTS_ORDERED -> PARTS_READY. Readiness does not reserve or deduct stock.
+- `ORDER_PARTS`: `{ supplierName?, items: [{ partId, quantity }] }`; assigned
+  parts person orders missing quantities. PARTS_PENDING -> PARTS_ORDERED;
+  additional uncovered shortages may be ordered in PARTS_ORDERED. If another
+  job consumes a READY job's stock, a shortage order stays PARTS_READY and is
+  audited without a new status or reservation.
+- `RECEIVE_PARTS`: `{ purchaseOrderId, items: [{ partId, quantity }] }`; positive
+  received deltas, assigned parts person, PARTS_ORDERED/PARTS_READY only. Partial
+  receipt remains PARTS_ORDERED until all required stock is available, then
+  PARTS_READY. A receipt on an already READY job is a same-state audit event.
+- `ALLOCATE_PARTS`: `{}`; assigned parts person, PARTS_READY -> IN_REPAIR,
+  complete allocation of server-derived approved quantities only.
+
+`POST /bookings/[id]/purchase-orders` accepts exactly `{ expectedVersion,
+idempotencyKey, supplierName?, items }`. `POST /purchase-orders/[id]/receive`
+accepts `{ expectedVersion, idempotencyKey, items }`; the route resolves the
+order's booking through user-scoped RLS, then SQL checks the binding again.
+`POST /bookings/[id]/allocate-parts` accepts `{ expectedVersion, idempotencyKey }`.
+No authoritative actor, tenant, stock balance or allocation quantity is accepted.
+All paths are under `/api/v1`.
+
+Order and receipt items contain 1-100 distinct UUID parts and positive integer
+quantities up to 999999999. Ordering is capped to approved aggregate requirement
+minus current stock minus outstanding quantities in this booking's orders; only
+required same-shop parts qualify. Supplier is nullable, trimmed, up to 200
+characters. Receipt deltas cannot exceed the remaining ordered quantity.
+Items are canonicalized by UUID order for idempotency comparison. Same-state
+orders/receipts write history and receipts without incrementing stateVersion;
+state changes increment it once. Invalid input returns 400, overdelivery or
+overordering 422, and missing/foreign orders or parts 404. Insufficient current
+stock at readiness/allocation returns 409 `STOCK_CONFLICT` with no partial effects.
+All other B06 version, replay, authorization and transaction errors still apply.
+
+`GET /shops/[id]/inventory?page=1` is OWNER/PARTS only and returns `{ items, page,
+pageSize: 50, total }`, ordered by SKU then ID, including inactive catalog items.
+Unknown/duplicate query keys and nondecimal pages are rejected. Each inventory
+item is `{ id, shopId, sku, name, quantityOnHand, reorderLevel, unitCostPkr, active }`.
+Technician/SA required stock summaries come through authorized booking detail,
+without private unit costs or suppliers.
+
+`POST /shops/[id]/inventory` creates (201) or updates by optional `id` (200), with
+exactly `{ id?, sku, name, unitCostPkr, reorderLevel?, active?, quantityOnHand? }`.
+SKU is trimmed 1-80 characters; name 1-200. All numbers are nonnegative integers
+up to 999999999. Opening quantity defaults to zero and is accepted only for a new
+SKU; edits reject quantityOnHand. Reorder defaults to zero; active defaults true
+on creation and is preserved if omitted on edit. Duplicate SKU is 409 SKU_EXISTS.
+Existing stock changes only via audited parts operations; catalog saves have no
+booking idempotency receipt. A duplicate create cannot increase existing stock.
+
+Booking detail adds `requiredParts[]` for authorized OWNER/SA/PARTS/TECHNICIAN
+staff (partId, quantityRequired, quantityOnHand, quantityAllocated, shortageQuantity),
+`purchaseOrders[]` for OWNER/PARTS only (order identity/status/supplier/timestamps
+and items with quantityOrdered/quantityReceived), and `partAllocations[]`
+(id, partId, quantity, allocatedBy, allocatedAt, releasedAt). Customers receive
+empty requiredParts/purchaseOrders arrays and retain their approved estimate
+snapshot, timeline and own allocation records. Booking lists retain their existing
+compact shape. B08 adds no UI, unlinked replenishment orders, manual stock
+adjustments, supplier integration or PO cancellation status. Outstanding orders
+on cancelled or in-repair jobs remain audit records; receiving through B08 is
+limited to the parts stages above.
+
 

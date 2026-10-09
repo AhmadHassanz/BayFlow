@@ -123,6 +123,31 @@ creates `revision_no + 1` back in `ESTIMATE_REVIEW`. Technician approval and
 foreign customer decisions are denied by the RPC. Parts, repair, QC and pickup
 remain later phases.
 
+## B08 Implemented Boundary
+
+B08 implements ASSIGN_PARTS, MARK_PARTS_READY, ORDER_PARTS, RECEIVE_PARTS and
+ALLOCATE_PARTS through the shared guarded action mechanism. Approved estimate
+PART lines are aggregated by part ID. A labour-only estimate still follows the
+parts assignment/readiness steps and enters IN_REPAIR without allocation rows.
+
+Readiness is an availability check, not a reservation. Allocation locks all
+required inventory rows, rechecks stock and deducts the complete requirement
+exactly once. A competing job can consume stock after readiness; allocation
+then returns STOCK_CONFLICT atomically. The assigned parts person may order the
+new uncovered shortage while staying PARTS_READY, receive it and retry allocation.
+Additional shortage orders in PARTS_ORDERED and receipts in PARTS_READY are also
+same-state audited operations. No new booking or purchase-order status is added.
+
+PO creation does not increase stock. Partial receipt increments inventory and
+quantity_received once; PO state is PARTIALLY_RECEIVED or RECEIVED independently
+of booking availability. Receipt moves PARTS_ORDERED to PARTS_READY only when
+every required part is available. Same-state activity writes history and an
+idempotency receipt but does not increment state_version. State transitions do.
+
+Cancellation releases pre-repair reservations exactly once; it does not undo
+already received physical stock or remove purchase orders. It also checks that
+history has never reached IN_REPAIR. Repair, QC and pickup remain B09.
+
 
 
 

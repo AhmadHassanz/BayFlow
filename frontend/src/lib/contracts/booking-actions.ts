@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { bookingCreationOutput, bookingStatus } from './bookings';
 import { uuid } from './auth';
+import { orderPartsPayload, receivePartsPayload, requiredPartOutput, purchaseOrderOutput, partAllocationOutput } from './parts';
 
 const identifier = uuid.transform(value => value.toLowerCase());
 const emptyPayload = z.object({}).strict().default({});
@@ -28,6 +29,7 @@ const estimatePayload = z.object({
 export const bookingAction = z.enum([
   'CONFIRM_BOOKING', 'ASSIGN_TECHNICIAN', 'START_INSPECTION', 'CANCEL_BOOKING',
   'SUBMIT_ESTIMATE', 'SEND_ESTIMATE', 'APPROVE_ESTIMATE', 'REJECT_ESTIMATE', 'REVISE_ESTIMATE',
+  'ASSIGN_PARTS', 'MARK_PARTS_READY', 'ORDER_PARTS', 'RECEIVE_PARTS', 'ALLOCATE_PARTS',
 ]);
 const baseAction = z.object({
   action: bookingAction,
@@ -53,6 +55,11 @@ export const bookingActionInput = z.discriminatedUnion('action', [
     payload: z.object({ reason: z.string().trim().max(500).optional() }).strict().default({}),
   }),
   baseAction.extend({ action: z.literal('REVISE_ESTIMATE'), payload: estimatePayload }),
+  baseAction.extend({ action: z.literal('ASSIGN_PARTS'), payload: z.object({ partsUserId: identifier }).strict() }),
+  baseAction.extend({ action: z.literal('MARK_PARTS_READY'), payload: emptyPayload }),
+  baseAction.extend({ action: z.literal('ORDER_PARTS'), payload: orderPartsPayload }),
+  baseAction.extend({ action: z.literal('RECEIVE_PARTS'), payload: receivePartsPayload }),
+  baseAction.extend({ action: z.literal('ALLOCATE_PARTS'), payload: emptyPayload }),
 ]);
 export const bookingHistoryEntry = z.object({
   id: uuid,
@@ -91,9 +98,12 @@ export const bookingDetailOutput = bookingCreationOutput.extend({
   qcClaimedBy: uuid.nullable(),
   completedAt: z.string().nullable(),
   estimates: z.array(estimateOutput).default([]),
+  requiredParts: z.array(requiredPartOutput).default([]),
+  purchaseOrders: z.array(purchaseOrderOutput).default([]),
+  partAllocations: z.array(partAllocationOutput).default([]),
   history: z.array(bookingHistoryEntry),
 });
-export const bookingListItemOutput = bookingDetailOutput.omit({ history: true, estimates: true });
+export const bookingListItemOutput = bookingDetailOutput.omit({ history: true, estimates: true, requiredParts: true, purchaseOrders: true, partAllocations: true });
 export const bookingActionRpcOutput = z.object({ booking: bookingDetailOutput, replayed: z.boolean() });
 export const shopBookingListQuery = z.object({
   status: bookingStatus.optional(),

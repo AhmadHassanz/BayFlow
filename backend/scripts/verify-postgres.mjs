@@ -1,7 +1,8 @@
 import EmbeddedPostgres from 'embedded-postgres';
 import { spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
-import { mkdir, mkdtemp } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm } from 'node:fs/promises';
+import { basename, isAbsolute, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 // Supplemental SQL verification only; this does not emulate Supabase Auth or REST.
@@ -9,6 +10,11 @@ const backendDirectory = fileURLToPath(new URL('../', import.meta.url));
 const testRoot = fileURLToPath(new URL('../.test-data/', import.meta.url));
 await mkdir(testRoot, { recursive: true });
 const directory = await mkdtemp(`${testRoot}postgres-`);
+const disposableRelativePath = relative(resolve(testRoot), resolve(directory));
+if (!disposableRelativePath || disposableRelativePath.startsWith('..') || isAbsolute(disposableRelativePath)
+  || !basename(directory).startsWith('postgres-')) {
+  throw new Error('Disposable PostgreSQL directory must stay inside backend/.test-data.');
+}
 const password = randomBytes(24).toString('hex');
 const port = 55432;
 const databaseUrl = `postgresql://postgres:${password}@127.0.0.1:${port}/postgres?sslmode=disable`;
@@ -84,5 +90,14 @@ try {
   console.log('PostgreSQL verification complete. Supabase Auth/REST checks require a separate Cloud test project.');
 } finally {
   if (client) await client.end();
-  await postgres.stop();
+  try { await postgres.stop(); }
+  catch (error) {
+    // On Windows the library kills the process tree, then removes the cluster
+    // without filesystem retries. Child handles may outlive the parent briefly.
+    // stop() clears its process before attempting removal; retry only this
+    // verified, freshly generated disposable directory after shutdown.
+    if (!['EBUSY', 'ENOTEMPTY', 'EPERM'].includes(error?.code)) throw error;
+    await rm(directory, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
+    console.log('Disposable PostgreSQL directory cleanup succeeded after filesystem retry.');
+  }
 }

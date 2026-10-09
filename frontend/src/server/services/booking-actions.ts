@@ -18,6 +18,7 @@ export function bookingActionError(error: { code?: string }): never {
   if (error.code === 'BF101') throw new ApiError(409, 'STATE_CONFLICT', 'Reload this booking.');
   if (error.code === 'BF102') throw new ApiError(409, 'IDEMPOTENCY_CONFLICT', 'Use a new request key for a different action.');
   if (error.code === 'BF103') throw new ApiError(422, 'ACTION_NOT_ALLOWED', 'This action is not allowed in the current state.');
+  if (error.code === 'BF104') throw new ApiError(409, 'STOCK_CONFLICT', 'Required parts are no longer available. Reload this booking.');
   if (['40001', '40P01', '55P03'].includes(error.code ?? ''))
     throw new ApiError(409, 'BOOKING_CONFLICT', 'Retry this action with the same request key.');
   throw new ApiError(500, 'DATABASE_ERROR', 'The booking action could not be completed.');

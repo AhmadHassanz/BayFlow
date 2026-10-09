@@ -1,5 +1,25 @@
 # Changelog
 
+## B08 - 2026-10-09
+
+- Added approved-estimate parts assignment, stock readiness, shortage ordering,
+  partial/full receipt and complete allocation into IN_REPAIR through the
+  existing guarded booking action RPC.
+- Added the documented inventory, PO, receipt and allocation Route Handlers,
+  strict contracts, stock-conflict mapping and role-scoped detail projections.
+- Aggregated approved PART quantities, locked stock in UUID order and preserved
+  exactly-once stock/audit effects on retries. Same-state shortage orders recover
+  READY jobs after competing allocation; cancellation releases pre-repair stock.
+- Added OWNER/PARTS catalog RPCs that preserve existing stock; RLS, table grants,
+  tables, fields and status enums are unchanged. Preserved the user's types file.
+- Added native procurement/race/rollback tests and real production HTTP/Cloud
+  acceptance. Made disposable harness cleanup tolerate transient Windows locks.
+- Applied only B08 and its forward lint/notice correction to verified Cloud
+  project tlqvlsrmxueuuzxyltej, with no reset, seeds or role changes.
+- Local SQL 124/124, frontend 137/137, lint/build and both typechecks passed.
+  Cloud lint passed; final B08 3/3, B07 1/1, B06 5/5 and RLS 81/81 passed.
+  See backend/docs/b08-parts-verification.md for the full verification record.
+
 ## B06 - 2026-10-09
 
 - Added guarded booking action RPCs and Route Handlers for detail/list reads and
