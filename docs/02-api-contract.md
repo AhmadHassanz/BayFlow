@@ -130,6 +130,10 @@ Emit in-app notifications on:
 
 Realtime is optional. Polling/refetch on focus is the safe baseline. Notification creation belongs to successful business operations, not optimistic UI.
 
+## B10 Notifications Boundary
+
+B10 implements `GET /api/v1/notifications` and `POST /api/v1/notifications/[id]/read`. The list route returns only the authenticated user's visible notifications with optional `unread=true` and `limit` capped at 50, plus `unreadCount`. The read route is same-origin only and marks exactly one own visible notification read through a guarded RPC. Direct notification table writes remain denied to ordinary users.
+
 ## Open Questions
 
 - Rate limit mechanism is not chosen until B00/B03.
@@ -448,5 +452,3 @@ Booking detail adds `qcRuns[]` and `qcIssues[]` for authorized actors. Existing
 role-scoped read guards still apply; a QC user who loses visibility after passing
 or failing sees empty detail arrays through the returned projection, while audit
 rows remain in the database. B09 adds no payment, invoice, customer survey or UI.
-
-

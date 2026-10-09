@@ -89,8 +89,8 @@ Cloud Auth/REST without requiring schema changes; see the
   FKs and tenant policies; `booking_services` has its own UUID primary key.
 - Safe public views deliberately bypass base-table RLS via audited projections;
   anonymous users have no base-table grants. Draft estimates are staff-only.
-- All ordinary client writes are denied in B01, including profile edits and
-  notification read markers. Later phases must add narrowly reviewed operations.
+- All ordinary client table writes are denied. B10 adds narrowly reviewed
+  notification read markers through guarded RPCs only.
 
 ## B03 Narrow Auth/Team Operations
 
