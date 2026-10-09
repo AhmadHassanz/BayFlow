@@ -4,10 +4,12 @@ import {
   bookingActionRpcOutput,
   bookingDetailOutput,
   myBookingListOutput,
+  qcQueueOutput,
   shopBookingListOutput,
   type BookingActionInput,
 } from '@/lib/contracts/booking-actions';
 import type { createClient } from '@/lib/supabase/server';
+import type { Json } from '@/lib/supabase/database.types';
 
 type Client = Awaited<ReturnType<typeof createClient>>;
 
@@ -25,7 +27,7 @@ export function bookingActionError(error: { code?: string }): never {
 }
 
 export async function applyBookingAction(client: Client, bookingId: string, input: BookingActionInput) {
-  const result = await client.rpc('apply_booking_action', { input: { bookingId, ...input } });
+  const result = await client.rpc('apply_booking_action', { input: { bookingId, ...input } as Json });
   if (result.error) bookingActionError(result.error);
   return bookingActionRpcOutput.parse(result.data);
 }
@@ -49,4 +51,10 @@ export async function listShopBookings(
   const result = await client.rpc('list_shop_bookings', { input });
   if (result.error) bookingActionError(result.error);
   return shopBookingListOutput.parse(result.data);
+}
+
+export async function listQcQueue(client: Client, shopId: string, page: number) {
+  const result = await client.rpc('list_qc_queue', { input: { shopId, page } });
+  if (result.error) bookingActionError(result.error);
+  return qcQueueOutput.parse(result.data);
 }

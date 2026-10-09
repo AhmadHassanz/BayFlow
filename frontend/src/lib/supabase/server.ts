@@ -1,7 +1,7 @@
 import 'server-only';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import type { AppDatabase } from './database.b08';
+import type { AppDatabase } from './database.b09';
 import { publicEnvironment } from './env';
 
 export async function createClient() {

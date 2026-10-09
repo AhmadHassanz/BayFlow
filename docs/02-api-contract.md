@@ -428,4 +428,25 @@ adjustments, supplier integration or PO cancellation status. Outstanding orders
 on cancelled or in-repair jobs remain audit records; receiving through B08 is
 limited to the parts stages above.
 
+## B09 Repair, QC and Pickup
+
+B09 extends `POST /api/v1/bookings/[id]/actions` and implements
+`GET /api/v1/shops/[id]/qc-queue?page=1`. The queue is QC-only and returns
+unclaimed `QC_PENDING` booking list items with `{ items, page, pageSize: 50 }`.
+Unknown or duplicate query keys are rejected.
+
+Added action names and payloads:
+
+- `COMPLETE_REPAIR`: `{ notes }`; assigned active technician only, `IN_REPAIR -> QC_PENDING`. Notes are trimmed, 3-2000 characters. Open QC issues for the booking are resolved when repair is resubmitted.
+- `CLAIM_QC`: `{}`; active same-shop QC only, `QC_PENDING -> QC_IN_PROGRESS`. First claimant wins; claimed jobs are hidden from other QC users by RLS/read guards.
+- `PASS_QC`: `{ checklist?, notes? }`; claiming QC only, `QC_IN_PROGRESS -> READY_FOR_PICKUP`. Checklist is a JSON object; notes trim to max 2000 characters.
+- `FAIL_QC`: `{ checklist?, notes?, title, description }`; claiming QC only, `QC_IN_PROGRESS -> IN_REPAIR`. Title is 1-200 characters and description is 1-2000. A linked QC issue is created atomically.
+- `NOTIFY_READY`: `{}`; OWNER/SA only, same-state `READY_FOR_PICKUP`, one idempotent customer notification per action key.
+- `COMPLETE_PICKUP`: `{}`; owning customer or OWNER/SA only, `READY_FOR_PICKUP -> COMPLETED`, with server `completedAt`.
+
+Booking detail adds `qcRuns[]` and `qcIssues[]` for authorized actors. Existing
+role-scoped read guards still apply; a QC user who loses visibility after passing
+or failing sees empty detail arrays through the returned projection, while audit
+rows remain in the database. B09 adds no payment, invoice, customer survey or UI.
+
 

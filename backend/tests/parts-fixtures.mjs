@@ -40,7 +40,8 @@ export async function setup(db, { stock = 0, labourOnly = false } = {}) {
   const service=(await db.query('select public.save_service($1,null,$2) s',[shop.id,{name:'B08 inspection',durationMinutes:60}])).rows[0].s;
   await db.query('reset role');
   await db.query(`insert into public.shop_memberships(shop_id,user_id,role) values
-    ($1,$2,'SA'),($1,$3,'TECHNICIAN'),($1,$4,'PARTS'),($1,$5,'PARTS')`,[shop.id,user(11),user(12),user(13),user(23)]);
+    ($1,$2,'SA'),($1,$3,'TECHNICIAN'),($1,$4,'PARTS'),($1,$5,'PARTS'),($1,$6,'QC'),($1,$7,'QC')`,
+    [shop.id,user(11),user(12),user(13),user(23),user(14),user(24)]);
   await asUser(db,13);
   const save=async(input)=>(await db.query('select public.save_inventory_part($1) p',[{shopId:shop.id,...input}])).rows[0].p;
   const part=await save({sku:'BELT',name:'B08 belt',quantityOnHand:stock,unitCostPkr:90});
@@ -51,5 +52,7 @@ export async function setup(db, { stock = 0, labourOnly = false } = {}) {
     order by starts_at limit 1`,[shop.id])).rows[0];
   const fixture={shopId:shop.id,serviceId:service.id,slotId:slot.id,partId:part.id,secondPartId:second.id};
   fixture.bookingId=await makeApproved(db,fixture,{labourOnly});
+  await db.query('reset role');
+  fixture.shopId=(await db.query('select shop_id as "shopId" from public.bookings where id=$1',[fixture.bookingId])).rows[0].shopId;
   return fixture;
 }

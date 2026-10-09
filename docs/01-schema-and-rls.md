@@ -219,3 +219,25 @@ New SKUs may specify opening stock; catalog updates cannot overwrite stock.
 SKU uniqueness protects repeated creates. Helpers have no client EXECUTE grants.
 An additive `database.b08.ts` RPC type overlay preserves the user's generated
 types file. See [B08 verification](../backend/docs/b08-parts-verification.md).
+
+## B09 Repair, QC and Pickup Operations
+
+`20261009190000_b09_repair_qc_pickup.sql` extends the shared guarded booking
+action receipt namespace with repair, QC and pickup actions. Forward migration
+`20261009190100_b09_qc_queue_payload_keys.sql` makes the QC queue helper accept
+the payload key casing used by the Supabase client. B09 uses the existing
+`qc_runs`, `qc_issues`, `notifications`, `booking_history` and booking assignment
+columns. No table, role, status, RLS policy or direct table write grant is added.
+
+Assigned active technicians alone can complete repair from `IN_REPAIR` into
+`QC_PENDING`. Active same-shop QC users can list the unclaimed QC queue and the
+first QC claimant atomically moves a job to `QC_IN_PROGRESS`. Only the claiming
+QC user can pass or fail that run. Passing closes the run and moves the booking
+to `READY_FOR_PICKUP`; failing closes the run, writes one issue, clears the QC
+claim and returns the job to the same assigned technician in `IN_REPAIR`.
+Completing repair again resolves open issues for that booking before requeueing QC.
+
+OWNER/SA users can send the same-state ready-for-pickup notice from
+`READY_FOR_PICKUP`; it is idempotent through the existing action receipt and does
+not increment `state_version`. The owning customer or OWNER/SA can complete pickup,
+which sets `COMPLETED` and `completed_at`.

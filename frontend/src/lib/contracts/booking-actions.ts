@@ -30,6 +30,7 @@ export const bookingAction = z.enum([
   'CONFIRM_BOOKING', 'ASSIGN_TECHNICIAN', 'START_INSPECTION', 'CANCEL_BOOKING',
   'SUBMIT_ESTIMATE', 'SEND_ESTIMATE', 'APPROVE_ESTIMATE', 'REJECT_ESTIMATE', 'REVISE_ESTIMATE',
   'ASSIGN_PARTS', 'MARK_PARTS_READY', 'ORDER_PARTS', 'RECEIVE_PARTS', 'ALLOCATE_PARTS',
+  'COMPLETE_REPAIR', 'CLAIM_QC', 'PASS_QC', 'FAIL_QC', 'NOTIFY_READY', 'COMPLETE_PICKUP',
 ]);
 const baseAction = z.object({
   action: bookingAction,
@@ -60,6 +61,29 @@ export const bookingActionInput = z.discriminatedUnion('action', [
   baseAction.extend({ action: z.literal('ORDER_PARTS'), payload: orderPartsPayload }),
   baseAction.extend({ action: z.literal('RECEIVE_PARTS'), payload: receivePartsPayload }),
   baseAction.extend({ action: z.literal('ALLOCATE_PARTS'), payload: emptyPayload }),
+  baseAction.extend({
+    action: z.literal('COMPLETE_REPAIR'),
+    payload: z.object({ notes: z.string().trim().min(3).max(2000) }).strict(),
+  }),
+  baseAction.extend({ action: z.literal('CLAIM_QC'), payload: emptyPayload }),
+  baseAction.extend({
+    action: z.literal('PASS_QC'),
+    payload: z.object({
+      checklist: z.record(z.string(), z.unknown()).default({}),
+      notes: z.string().trim().max(2000).optional().default(''),
+    }).strict(),
+  }),
+  baseAction.extend({
+    action: z.literal('FAIL_QC'),
+    payload: z.object({
+      checklist: z.record(z.string(), z.unknown()).default({}),
+      notes: z.string().trim().max(2000).optional().default(''),
+      title: z.string().trim().min(1).max(200),
+      description: z.string().trim().min(1).max(2000),
+    }).strict(),
+  }),
+  baseAction.extend({ action: z.literal('NOTIFY_READY'), payload: emptyPayload }),
+  baseAction.extend({ action: z.literal('COMPLETE_PICKUP'), payload: emptyPayload }),
 ]);
 export const bookingHistoryEntry = z.object({
   id: uuid,
@@ -101,9 +125,34 @@ export const bookingDetailOutput = bookingCreationOutput.extend({
   requiredParts: z.array(requiredPartOutput).default([]),
   purchaseOrders: z.array(purchaseOrderOutput).default([]),
   partAllocations: z.array(partAllocationOutput).default([]),
+  qcRuns: z.array(z.object({
+    id: uuid,
+    bookingId: uuid,
+    shopId: uuid,
+    inspectorUserId: uuid,
+    startedAt: z.string(),
+    finishedAt: z.string().nullable(),
+    passed: z.boolean().nullable(),
+    checklist: z.record(z.string(), z.unknown()),
+    notes: z.string(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+  })).default([]),
+  qcIssues: z.array(z.object({
+    id: uuid,
+    bookingId: uuid,
+    shopId: uuid,
+    qcRunId: uuid,
+    reportedBy: uuid,
+    title: z.string(),
+    description: z.string(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+    resolvedAt: z.string().nullable(),
+  })).default([]),
   history: z.array(bookingHistoryEntry),
 });
-export const bookingListItemOutput = bookingDetailOutput.omit({ history: true, estimates: true, requiredParts: true, purchaseOrders: true, partAllocations: true });
+export const bookingListItemOutput = bookingDetailOutput.omit({ history: true, estimates: true, requiredParts: true, purchaseOrders: true, partAllocations: true, qcRuns: true, qcIssues: true });
 export const bookingActionRpcOutput = z.object({ booking: bookingDetailOutput, replayed: z.boolean() });
 export const shopBookingListQuery = z.object({
   status: bookingStatus.optional(),
@@ -115,5 +164,9 @@ export const shopBookingListOutput = z.object({
   page: z.number().int().positive(),
   pageSize: z.literal(50),
 });
+export const qcQueueQuery = z.object({
+  page: z.coerce.number().int().min(1).max(99999).default(1),
+}).strict();
+export const qcQueueOutput = shopBookingListOutput;
 export const myBookingListOutput = z.array(bookingListItemOutput);
 export type BookingActionInput = z.infer<typeof bookingActionInput>;

@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   get: vi.fn(),
   myList: vi.fn(),
   shopList: vi.fn(),
+  qcQueue: vi.fn(),
 }));
 vi.mock('@/lib/auth/session', () => ({ requireIdentity: mocks.identity }));
 vi.mock('@/server/services/booking-actions', () => ({
@@ -15,12 +16,14 @@ vi.mock('@/server/services/booking-actions', () => ({
   getBooking: mocks.get,
   listMyBookings: mocks.myList,
   listShopBookings: mocks.shopList,
+  listQcQueue: mocks.qcQueue,
 }));
 
 import { POST } from '@/app/api/v1/bookings/[id]/actions/route';
 import { GET as getBooking } from '@/app/api/v1/bookings/[id]/route';
 import { GET as getMine } from '@/app/api/v1/me/bookings/route';
 import { GET as getShop } from '@/app/api/v1/shops/[id]/bookings/route';
+import { GET as getQcQueue } from '@/app/api/v1/shops/[id]/qc-queue/route';
 
 const id = 'b0600000-0000-4000-8000-000000000001';
 const tech = 'b0600000-0000-4000-8000-000000000002';
@@ -42,6 +45,7 @@ beforeEach(() => {
   mocks.get.mockResolvedValue(booking);
   mocks.myList.mockResolvedValue([booking]);
   mocks.shopList.mockResolvedValue({ items: [booking], page: 1, pageSize: 50 });
+  mocks.qcQueue.mockResolvedValue({ items: [booking], page: 1, pageSize: 50 });
 });
 
 it('validates each B06 action shape before calling the service', () => {
@@ -85,6 +89,27 @@ it('validates B07 estimate action shapes and rejects author-supplied totals', ()
     payload: { ...estimate, subtotalPkr: 1 } })).toThrow();
   expect(() => bookingActionInput.parse({ action: 'SUBMIT_ESTIMATE', expectedVersion: 3, idempotencyKey: id,
     payload: { diagnosisNote: 'Bad labour item', items: [{ kind: 'LABOUR', partId: tech, descriptionSnapshot: 'Labour', quantity: 1, unitPricePkr: 1 }] } })).toThrow();
+});
+
+it('validates B09 repair, QC and pickup action shapes', () => {
+  const repair = bookingActionInput.parse({ action: 'COMPLETE_REPAIR', expectedVersion: 9, idempotencyKey: id,
+    payload: { notes: '  Replaced belt and road tested  ' } });
+  expect(repair.action).toBe('COMPLETE_REPAIR');
+  if (repair.action === 'COMPLETE_REPAIR') expect(repair.payload.notes).toBe('Replaced belt and road tested');
+  expect(bookingActionInput.parse({ action: 'CLAIM_QC', expectedVersion: 10, idempotencyKey: id })).toMatchObject({ payload: {} });
+  const pass = bookingActionInput.parse({ action: 'PASS_QC', expectedVersion: 11, idempotencyKey: id,
+    payload: { checklist: { roadTest: true }, notes: ' Passed ' } });
+  expect(pass.action).toBe('PASS_QC');
+  if (pass.action === 'PASS_QC') expect(pass.payload.notes).toBe('Passed');
+  const fail = bookingActionInput.parse({ action: 'FAIL_QC', expectedVersion: 11, idempotencyKey: id,
+    payload: { checklist: { leakCheck: false }, title: ' Leak ', description: ' Leak remains ' } });
+  expect(fail.action).toBe('FAIL_QC');
+  if (fail.action === 'FAIL_QC') expect(fail.payload.title).toBe('Leak');
+  expect(bookingActionInput.parse({ action: 'NOTIFY_READY', expectedVersion: 12, idempotencyKey: id })).toMatchObject({ payload: {} });
+  expect(bookingActionInput.parse({ action: 'COMPLETE_PICKUP', expectedVersion: 12, idempotencyKey: id })).toMatchObject({ payload: {} });
+  expect(() => bookingActionInput.parse({ action: 'COMPLETE_REPAIR', expectedVersion: 9, idempotencyKey: id, payload: { notes: 'no' } })).toThrow();
+  expect(() => bookingActionInput.parse({ action: 'PASS_QC', expectedVersion: 11, idempotencyKey: id, payload: { checklist: [] } })).toThrow();
+  expect(() => bookingActionInput.parse({ action: 'FAIL_QC', expectedVersion: 11, idempotencyKey: id, payload: { checklist: {}, title: '', description: 'bad' } })).toThrow();
 });
 
 it.each([
@@ -139,6 +164,14 @@ it('parses shop booking filters and rejects unknown query keys', async () => {
   expect(response.status).toBe(200);
   expect(mocks.shopList).toHaveBeenCalledWith({}, { shopId: id, status: 'CONFIRMED', assignee: 'mine', page: 2 });
   response = await getShop(new Request(`http://localhost:3000/api/v1/shops/${id}/bookings?role=OWNER`), context);
+  expect(response.status).toBe(400);
+});
+
+it('reads the QC queue through verified QC identity and rejects unknown query keys', async () => {
+  let response = await getQcQueue(new Request(`http://localhost:3000/api/v1/shops/${id}/qc-queue?page=2`), context);
+  expect(response.status).toBe(200);
+  expect(mocks.qcQueue).toHaveBeenCalledWith({}, id, 2);
+  response = await getQcQueue(new Request(`http://localhost:3000/api/v1/shops/${id}/qc-queue?status=QC_PENDING`), context);
   expect(response.status).toBe(400);
 });
 

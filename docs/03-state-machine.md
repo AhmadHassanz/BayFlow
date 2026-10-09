@@ -148,6 +148,20 @@ Cancellation releases pre-repair reservations exactly once; it does not undo
 already received physical stock or remove purchase orders. It also checks that
 history has never reached IN_REPAIR. Repair, QC and pickup remain B09.
 
+## B09 Implemented Boundary
+
+B09 implements `COMPLETE_REPAIR`, `CLAIM_QC`, `PASS_QC`, `FAIL_QC`,
+`NOTIFY_READY` and `COMPLETE_PICKUP` through the shared guarded action mechanism.
+The assigned technician sends `IN_REPAIR` jobs to the unclaimed QC queue. Active
+QC staff claim queued jobs atomically; the claimant alone can pass or fail.
+
+QC failure creates a linked issue and returns the same booking to `IN_REPAIR`
+without changing the technician assignment. The next `COMPLETE_REPAIR` resolves
+open issues for that booking and queues it for another QC claim. QC pass moves
+to `READY_FOR_PICKUP`; OWNER/SA ready notification is same-state and idempotent;
+customer or OWNER/SA pickup completion moves to terminal `COMPLETED` and sets
+`completed_at`. No new status is introduced.
+
 
 
 
