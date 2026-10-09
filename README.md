@@ -2,10 +2,10 @@
 
 BayFlow is a multi-tenant auto repair workflow platform for customers, garage owners, service advisors, technicians, parts staff, and QC inspectors.
 
-**Phase B03: implemented and locally verified; Cloud application pending approval.** B01/B02
+**Phase B03: passed locally and in Supabase Cloud.** B01/B02
 database isolation remains in place. B03 adds a minimal runnable Next.js frontend,
-SSR auth, `/me`, and owner-authorized staff/membership APIs. Its new Cloud migration
-requires review and explicit approval before application. Business workflow APIs
+SSR auth, `/me`, and owner-authorized staff/membership APIs. Its Cloud migration
+was applied with explicit user approval. Business workflow APIs
 and UI are outside this phase. See [B03 evidence](backend/docs/b03-auth-verification.md).
 
 ## What problem it solves
@@ -76,8 +76,8 @@ Cloud linking/review/push commands, RLS decisions, and full fixture account list
 Cloud project `tlqvlsrmxueuuzxyltej` is linked with all three migrations applied.
 Never reset Cloud or include the local seed in a Cloud push. Future migrations
 require review before application.
-The additional B03 migration `20261009100642_b03_auth_and_team.sql` has passed
-native verification and Cloud dry-run; Cloud application is pending approval.
+The additional B03 migration `20261009100642_b03_auth_and_team.sql` is applied
+locally and in Cloud. Cloud lint reports no schema errors.
 
 Supabase CLI generated [database types](frontend/src/lib/supabase/database.types.ts)
 from the linked Cloud schema. Run
@@ -99,9 +99,11 @@ and 57 native tests pass. No Docker or additional dependencies are needed.
 
 From `frontend/`, B03 provides `npm run dev`, `npm run build`, `npm run start`,
 `npm run lint`, `npm run typecheck`, and `npm run test`. Auth UI belongs to later
-frontend work. After the reviewed B03 migration is applied, run
+frontend work. Run
 `npm run db:test:cloud:b03` from `backend/` to exercise production Next.js against
-real Cloud Auth. Tests obtain keys in memory through the existing CLI login/link.
+real Cloud Auth. The B03 suite passed 12/12, and the existing RLS suite passed
+81/81 again after migration application. Tests obtain keys in memory through the
+existing CLI login/link.
 
 ## Demo credentials
 
@@ -140,8 +142,7 @@ Security contracts remain in [docs/01-schema-and-rls.md](docs/01-schema-and-rls.
 B01 verifies PostgreSQL behavior using minimal platform Auth/role fixtures.
 B02 additionally verifies real Cloud sign-in, REST authorization and SQL lint.
 Test identities and immutable audit fixtures remain in Cloud; test shops are
-hidden and test staff deactivated after the run. B03's local migration must be
-approved and applied before its new RPCs work in Cloud. Distributed Auth/staff
+hidden and test staff deactivated after the run. Distributed Auth/staff
 provisioning failures can require operator recovery; see the B03 guide. Workflow
 RPCs, idempotency and transition guards belong to later phases. B04 has not started.
 

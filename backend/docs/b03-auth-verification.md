@@ -142,8 +142,24 @@ Backend typecheck and Cloud-suite JavaScript syntax check exited 0.
 Cloud link file matched `tlqvlsrmxueuuzxyltej`. Initial `migration list` failed
 with an unexpected pooler connection termination. Subsequent standalone
 `db push --dry-run` exited 0 and listed only the B03 migration, with `seeds: []`
-and `roles: []`. No Cloud schema application has been authorized or executed yet.
-The B03-specific Cloud suite is **NOT RUN** until migration approval/application.
+and `roles: []`. The user subsequently explicitly approved application. A fresh
+dry-run again listed only B03; `db push --yes` exited 0 and applied
+`20261009100642_b03_auth_and_team.sql`, with no seeds or role changes.
+Cloud lint exited 0: `No schema errors found` in extensions/private/public.
+
+B03 real Cloud verification exited 0: **12 tests, 12 passed, 0 failed**,
+including successful cleanup (170982 ms). Verified repeated SSR identity reads,
+expired-cookie refresh with forwarded cookies, public RPC grants/anonymous denial,
+staff/outsider/foreign-owner denial, all four staff roles and real initial-password
+login, duplicate-email credential preservation, immediate membership deactivation,
+and logout cookie clearing plus zero remaining Auth sessions.
+
+The first Cloud run passed all 12 assertions but failed its cleanup hook. Its
+logout test had revoked the outsider session before shared cleanup attempted to
+log out that session again. A standalone check found zero active fixture shops,
+zero B02 sessions and zero B03 sessions. The test now verifies zero sessions after
+logout and removes that revoked token from cleanup inputs. The complete rerun,
+including cleanup, passed. No application or migration change was needed.
 
 Frontend unit/API tests: **5 files, 43 tests passed**, exit 0. Frontend typecheck
 and ESLint each exited 0. The initial strict declaration check reported the
@@ -171,7 +187,7 @@ B03 production HTTP smoke: 5/5 passed
 All five responses had no-store headers and safe error envelopes. Smoke tests use
 no real credentials and perform no Cloud writes. Post-build typecheck and lint
 were rerun successfully. `git diff --check` passed. The scoped checkpoint excludes
-the preexisting generated-types change. No Cloud migration has been pushed.
+the preexisting generated-types change.
 
 Existing Cloud RLS regression rerun: **81 tests, 81 passed, 0 failed**, exit 0.
 The first attempt failed in the before-hook's initial fixture lookup due to a
@@ -180,7 +196,17 @@ changed. A standalone `select true as connection_ok` returned true; the next
 sequential run passed and reported fixture cleanup complete. This is a connection
 limitation, not evidence that the B03 migration has been tested in Cloud.
 
-## Cloud fixtures and pending gate
+After approved Cloud application, the existing RLS suite was run again:
+**81 tests, 81 passed, 0 failed**, exit 0 (230315 ms). It verified the B03-aware
+private function allowlist, tenant isolation, all 18 tables' direct-write denial,
+and matching-shop foreign keys. Cleanup confirmed hidden test shops, deactivated
+staff and signed-out Auth sessions; audit fixtures remain retained.
+
+B03 is **PASSED**. Implementation checkpoint: `466e6cd`; the subsequent Cloud
+verification checkpoint records approval, migration application, test-cleanup
+correction and these results. No B04 work was started.
+
+## Cloud fixtures and acceptance gate
 
 `db:test:cloud:b03` requires a production frontend build and the applied B03
 migration. Its preflight refuses to create Auth fixtures when the migration is
@@ -193,9 +219,10 @@ Cleanup hides the B02 shops, deactivates non-owner fixture memberships, bans
 new B03 accounts, and globally logs out known fixture sessions. Audit-safe records
 are retained. This is test data, not B11 demo provisioning.
 
-B03 cannot be marked PASSED until the reviewed Cloud migration is approved,
-applied, linted and the real session/staff suite succeeds. Do not start B04 as
-part of this work order.
+The reviewed migration is approved/applied, Cloud lint passed, and the real
+session/staff suite passed. B04 remains outside this work order. Email delivery
+and a real browser PKCE email-link round trip remain deployment integration
+checks; the callback exchange/error/redirect behavior has focused automated tests.
 
 Implementation references:
 [Supabase SSR clients](https://supabase.com/docs/guides/auth/server-side/creating-a-client?queryGroups=framework&framework=nextjs),

@@ -188,4 +188,8 @@ test('B03 logout clears SSR cookies and the next API call returns 401', async ()
   const context = clients.outsider;
   assert.equal((await context.client.auth.signOut({ scope: 'local' })).error, null);
   assert.equal((await request('/api/v1/me', context)).status, 401);
+  const sessions = await cloud.query(`select count(*)::integer as sessions from auth.sessions where user_id=${sqlLiteral(actors.outsider.id)}`);
+  assert.equal(sessions[0].sessions, 0, 'Logout must revoke the fixture session.');
+  // Cleanup must not issue a second logout using this now-revoked session.
+  delete actors.outsider.token;
 });
