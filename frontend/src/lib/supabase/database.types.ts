@@ -3,36 +3,40 @@ export type Json = string | number | boolean | null | {
     [key: string]: Json | undefined;
 } | Json[];
 export type Database = {
-    "public": {
+    // Allows to automatically instantiate createClient with right options
+    // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+    __InternalSupabase: {
+        PostgrestVersion: "14.18";
+    };
+    public: {
         Tables: {
-            "appointment_slots": {
+            appointment_slots: {
                 Row: {
-                    "capacity": number;
-                    "created_at": string;
-                    "ends_at": string;
-                    "id": string;
-                    "shop_id": string;
-                    "starts_at": string;
-                    "updated_at": string;
+                    capacity: number;
+                    created_at: string;
+                    ends_at: string;
+                    id: string;
+                    shop_id: string;
+                    starts_at: string;
+                    updated_at: string;
                 };
-                ComputedFields: never;
                 Insert: {
-                    "capacity": number;
-                    "created_at"?: string;
-                    "ends_at": string;
-                    "id"?: string;
-                    "shop_id": string;
-                    "starts_at": string;
-                    "updated_at"?: string;
+                    capacity: number;
+                    created_at?: string;
+                    ends_at: string;
+                    id?: string;
+                    shop_id: string;
+                    starts_at: string;
+                    updated_at?: string;
                 };
                 Update: {
-                    "capacity"?: number;
-                    "created_at"?: string;
-                    "ends_at"?: string;
-                    "id"?: string;
-                    "shop_id"?: string;
-                    "starts_at"?: string;
-                    "updated_at"?: string;
+                    capacity?: number;
+                    created_at?: string;
+                    ends_at?: string;
+                    id?: string;
+                    shop_id?: string;
+                    starts_at?: string;
+                    updated_at?: string;
                 };
                 Relationships: [
                     {
@@ -59,40 +63,39 @@ export type Database = {
                     }
                 ];
             };
-            "booking_history": {
+            booking_history: {
                 Row: {
-                    "action": string;
-                    "actor_user_id": string;
-                    "booking_id": string;
-                    "created_at": string;
-                    "from_status": Database["public"]['Enums']["booking_status"] | null;
-                    "id": string;
-                    "note": string | null;
-                    "shop_id": string;
-                    "to_status": Database["public"]['Enums']["booking_status"];
+                    action: string;
+                    actor_user_id: string;
+                    booking_id: string;
+                    created_at: string;
+                    from_status: Database["public"]["Enums"]["booking_status"] | null;
+                    id: string;
+                    note: string | null;
+                    shop_id: string;
+                    to_status: Database["public"]["Enums"]["booking_status"];
                 };
-                ComputedFields: never;
                 Insert: {
-                    "action": string;
-                    "actor_user_id": string;
-                    "booking_id": string;
-                    "created_at"?: string;
-                    "from_status"?: Database["public"]['Enums']["booking_status"] | null;
-                    "id"?: string;
-                    "note"?: string | null;
-                    "shop_id": string;
-                    "to_status": Database["public"]['Enums']["booking_status"];
+                    action: string;
+                    actor_user_id: string;
+                    booking_id: string;
+                    created_at?: string;
+                    from_status?: Database["public"]["Enums"]["booking_status"] | null;
+                    id?: string;
+                    note?: string | null;
+                    shop_id: string;
+                    to_status: Database["public"]["Enums"]["booking_status"];
                 };
                 Update: {
-                    "action"?: string;
-                    "actor_user_id"?: string;
-                    "booking_id"?: string;
-                    "created_at"?: string;
-                    "from_status"?: Database["public"]['Enums']["booking_status"] | null;
-                    "id"?: string;
-                    "note"?: string | null;
-                    "shop_id"?: string;
-                    "to_status"?: Database["public"]['Enums']["booking_status"];
+                    action?: string;
+                    actor_user_id?: string;
+                    booking_id?: string;
+                    created_at?: string;
+                    from_status?: Database["public"]["Enums"]["booking_status"] | null;
+                    id?: string;
+                    note?: string | null;
+                    shop_id?: string;
+                    to_status?: Database["public"]["Enums"]["booking_status"];
                 };
                 Relationships: [
                     {
@@ -143,28 +146,27 @@ export type Database = {
                     }
                 ];
             };
-            "booking_services": {
+            booking_services: {
                 Row: {
-                    "booking_id": string;
-                    "created_at": string;
-                    "id": string;
-                    "service_id": string;
-                    "shop_id": string;
+                    booking_id: string;
+                    created_at: string;
+                    id: string;
+                    service_id: string;
+                    shop_id: string;
                 };
-                ComputedFields: never;
                 Insert: {
-                    "booking_id": string;
-                    "created_at"?: string;
-                    "id"?: string;
-                    "service_id": string;
-                    "shop_id": string;
+                    booking_id: string;
+                    created_at?: string;
+                    id?: string;
+                    service_id: string;
+                    shop_id: string;
                 };
                 Update: {
-                    "booking_id"?: string;
-                    "created_at"?: string;
-                    "id"?: string;
-                    "service_id"?: string;
-                    "shop_id"?: string;
+                    booking_id?: string;
+                    created_at?: string;
+                    id?: string;
+                    service_id?: string;
+                    shop_id?: string;
                 };
                 Relationships: [
                     {
@@ -230,55 +232,54 @@ export type Database = {
                     }
                 ];
             };
-            "bookings": {
+            bookings: {
                 Row: {
-                    "completed_at": string | null;
-                    "created_at": string;
-                    "customer_id": string;
-                    "id": string;
-                    "notes": string;
-                    "parts_user_id": string | null;
-                    "qc_claimed_by": string | null;
-                    "shop_id": string;
-                    "slot_id": string;
-                    "state_version": number;
-                    "status": Database["public"]['Enums']["booking_status"];
-                    "technician_user_id": string | null;
-                    "updated_at": string;
-                    "vehicle_id": string;
+                    completed_at: string | null;
+                    created_at: string;
+                    customer_id: string;
+                    id: string;
+                    notes: string;
+                    parts_user_id: string | null;
+                    qc_claimed_by: string | null;
+                    shop_id: string;
+                    slot_id: string;
+                    state_version: number;
+                    status: Database["public"]["Enums"]["booking_status"];
+                    technician_user_id: string | null;
+                    updated_at: string;
+                    vehicle_id: string;
                 };
-                ComputedFields: never;
                 Insert: {
-                    "completed_at"?: string | null;
-                    "created_at"?: string;
-                    "customer_id": string;
-                    "id"?: string;
-                    "notes"?: string;
-                    "parts_user_id"?: string | null;
-                    "qc_claimed_by"?: string | null;
-                    "shop_id": string;
-                    "slot_id": string;
-                    "state_version"?: number;
-                    "status"?: Database["public"]['Enums']["booking_status"];
-                    "technician_user_id"?: string | null;
-                    "updated_at"?: string;
-                    "vehicle_id": string;
+                    completed_at?: string | null;
+                    created_at?: string;
+                    customer_id: string;
+                    id?: string;
+                    notes?: string;
+                    parts_user_id?: string | null;
+                    qc_claimed_by?: string | null;
+                    shop_id: string;
+                    slot_id: string;
+                    state_version?: number;
+                    status?: Database["public"]["Enums"]["booking_status"];
+                    technician_user_id?: string | null;
+                    updated_at?: string;
+                    vehicle_id: string;
                 };
                 Update: {
-                    "completed_at"?: string | null;
-                    "created_at"?: string;
-                    "customer_id"?: string;
-                    "id"?: string;
-                    "notes"?: string;
-                    "parts_user_id"?: string | null;
-                    "qc_claimed_by"?: string | null;
-                    "shop_id"?: string;
-                    "slot_id"?: string;
-                    "state_version"?: number;
-                    "status"?: Database["public"]['Enums']["booking_status"];
-                    "technician_user_id"?: string | null;
-                    "updated_at"?: string;
-                    "vehicle_id"?: string;
+                    completed_at?: string | null;
+                    created_at?: string;
+                    customer_id?: string;
+                    id?: string;
+                    notes?: string;
+                    parts_user_id?: string | null;
+                    qc_claimed_by?: string | null;
+                    shop_id?: string;
+                    slot_id?: string;
+                    state_version?: number;
+                    status?: Database["public"]["Enums"]["booking_status"];
+                    technician_user_id?: string | null;
+                    updated_at?: string;
+                    vehicle_id?: string;
                 };
                 Relationships: [
                     {
@@ -394,46 +395,45 @@ export type Database = {
                     }
                 ];
             };
-            "estimate_items": {
+            estimate_items: {
                 Row: {
-                    "created_at": string;
-                    "description_snapshot": string;
-                    "estimate_id": string;
-                    "id": string;
-                    "kind": Database["public"]['Enums']["estimate_item_kind"];
-                    "line_total_pkr": number | null;
-                    "part_id": string | null;
-                    "quantity": number;
-                    "shop_id": string;
-                    "unit_price_pkr": number;
-                    "updated_at": string;
+                    created_at: string;
+                    description_snapshot: string;
+                    estimate_id: string;
+                    id: string;
+                    kind: Database["public"]["Enums"]["estimate_item_kind"];
+                    line_total_pkr: number | null;
+                    part_id: string | null;
+                    quantity: number;
+                    shop_id: string;
+                    unit_price_pkr: number;
+                    updated_at: string;
                 };
-                ComputedFields: never;
                 Insert: {
-                    "created_at"?: string;
-                    "description_snapshot": string;
-                    "estimate_id": string;
-                    "id"?: string;
-                    "kind": Database["public"]['Enums']["estimate_item_kind"];
-                    "line_total_pkr"?: never;
-                    "part_id"?: string | null;
-                    "quantity": number;
-                    "shop_id": string;
-                    "unit_price_pkr": number;
-                    "updated_at"?: string;
+                    created_at?: string;
+                    description_snapshot: string;
+                    estimate_id: string;
+                    id?: string;
+                    kind: Database["public"]["Enums"]["estimate_item_kind"];
+                    line_total_pkr?: number | null;
+                    part_id?: string | null;
+                    quantity: number;
+                    shop_id: string;
+                    unit_price_pkr: number;
+                    updated_at?: string;
                 };
                 Update: {
-                    "created_at"?: string;
-                    "description_snapshot"?: string;
-                    "estimate_id"?: string;
-                    "id"?: string;
-                    "kind"?: Database["public"]['Enums']["estimate_item_kind"];
-                    "line_total_pkr"?: never;
-                    "part_id"?: string | null;
-                    "quantity"?: number;
-                    "shop_id"?: string;
-                    "unit_price_pkr"?: number;
-                    "updated_at"?: string;
+                    created_at?: string;
+                    description_snapshot?: string;
+                    estimate_id?: string;
+                    id?: string;
+                    kind?: Database["public"]["Enums"]["estimate_item_kind"];
+                    line_total_pkr?: number | null;
+                    part_id?: string | null;
+                    quantity?: number;
+                    shop_id?: string;
+                    unit_price_pkr?: number;
+                    updated_at?: string;
                 };
                 Relationships: [
                     {
@@ -486,46 +486,45 @@ export type Database = {
                     }
                 ];
             };
-            "estimates": {
+            estimates: {
                 Row: {
-                    "booking_id": string;
-                    "created_at": string;
-                    "decided_at": string | null;
-                    "diagnosis_note": string;
-                    "id": string;
-                    "revision_no": number;
-                    "sent_at": string | null;
-                    "shop_id": string;
-                    "state": Database["public"]['Enums']["estimate_state"];
-                    "subtotal_pkr": number;
-                    "updated_at": string;
+                    booking_id: string;
+                    created_at: string;
+                    decided_at: string | null;
+                    diagnosis_note: string;
+                    id: string;
+                    revision_no: number;
+                    sent_at: string | null;
+                    shop_id: string;
+                    state: Database["public"]["Enums"]["estimate_state"];
+                    subtotal_pkr: number;
+                    updated_at: string;
                 };
-                ComputedFields: never;
                 Insert: {
-                    "booking_id": string;
-                    "created_at"?: string;
-                    "decided_at"?: string | null;
-                    "diagnosis_note"?: string;
-                    "id"?: string;
-                    "revision_no": number;
-                    "sent_at"?: string | null;
-                    "shop_id": string;
-                    "state"?: Database["public"]['Enums']["estimate_state"];
-                    "subtotal_pkr"?: number;
-                    "updated_at"?: string;
+                    booking_id: string;
+                    created_at?: string;
+                    decided_at?: string | null;
+                    diagnosis_note?: string;
+                    id?: string;
+                    revision_no: number;
+                    sent_at?: string | null;
+                    shop_id: string;
+                    state?: Database["public"]["Enums"]["estimate_state"];
+                    subtotal_pkr?: number;
+                    updated_at?: string;
                 };
                 Update: {
-                    "booking_id"?: string;
-                    "created_at"?: string;
-                    "decided_at"?: string | null;
-                    "diagnosis_note"?: string;
-                    "id"?: string;
-                    "revision_no"?: number;
-                    "sent_at"?: string | null;
-                    "shop_id"?: string;
-                    "state"?: Database["public"]['Enums']["estimate_state"];
-                    "subtotal_pkr"?: number;
-                    "updated_at"?: string;
+                    booking_id?: string;
+                    created_at?: string;
+                    decided_at?: string | null;
+                    diagnosis_note?: string;
+                    id?: string;
+                    revision_no?: number;
+                    sent_at?: string | null;
+                    shop_id?: string;
+                    state?: Database["public"]["Enums"]["estimate_state"];
+                    subtotal_pkr?: number;
+                    updated_at?: string;
                 };
                 Relationships: [
                     {
@@ -565,43 +564,42 @@ export type Database = {
                     }
                 ];
             };
-            "inventory_parts": {
+            inventory_parts: {
                 Row: {
-                    "active": boolean;
-                    "created_at": string;
-                    "id": string;
-                    "name": string;
-                    "quantity_on_hand": number;
-                    "reorder_level": number;
-                    "shop_id": string;
-                    "sku": string;
-                    "unit_cost_pkr": number;
-                    "updated_at": string;
+                    active: boolean;
+                    created_at: string;
+                    id: string;
+                    name: string;
+                    quantity_on_hand: number;
+                    reorder_level: number;
+                    shop_id: string;
+                    sku: string;
+                    unit_cost_pkr: number;
+                    updated_at: string;
                 };
-                ComputedFields: never;
                 Insert: {
-                    "active"?: boolean;
-                    "created_at"?: string;
-                    "id"?: string;
-                    "name": string;
-                    "quantity_on_hand"?: number;
-                    "reorder_level"?: number;
-                    "shop_id": string;
-                    "sku": string;
-                    "unit_cost_pkr": number;
-                    "updated_at"?: string;
+                    active?: boolean;
+                    created_at?: string;
+                    id?: string;
+                    name: string;
+                    quantity_on_hand?: number;
+                    reorder_level?: number;
+                    shop_id: string;
+                    sku: string;
+                    unit_cost_pkr: number;
+                    updated_at?: string;
                 };
                 Update: {
-                    "active"?: boolean;
-                    "created_at"?: string;
-                    "id"?: string;
-                    "name"?: string;
-                    "quantity_on_hand"?: number;
-                    "reorder_level"?: number;
-                    "shop_id"?: string;
-                    "sku"?: string;
-                    "unit_cost_pkr"?: number;
-                    "updated_at"?: string;
+                    active?: boolean;
+                    created_at?: string;
+                    id?: string;
+                    name?: string;
+                    quantity_on_hand?: number;
+                    reorder_level?: number;
+                    shop_id?: string;
+                    sku?: string;
+                    unit_cost_pkr?: number;
+                    updated_at?: string;
                 };
                 Relationships: [
                     {
@@ -628,40 +626,39 @@ export type Database = {
                     }
                 ];
             };
-            "notifications": {
+            notifications: {
                 Row: {
-                    "booking_id": string | null;
-                    "created_at": string;
-                    "id": string;
-                    "message": string;
-                    "read_at": string | null;
-                    "shop_id": string | null;
-                    "title": string;
-                    "type": string;
-                    "user_id": string;
+                    booking_id: string | null;
+                    created_at: string;
+                    id: string;
+                    message: string;
+                    read_at: string | null;
+                    shop_id: string | null;
+                    title: string;
+                    type: string;
+                    user_id: string;
                 };
-                ComputedFields: never;
                 Insert: {
-                    "booking_id"?: string | null;
-                    "created_at"?: string;
-                    "id"?: string;
-                    "message": string;
-                    "read_at"?: string | null;
-                    "shop_id"?: string | null;
-                    "title": string;
-                    "type": string;
-                    "user_id": string;
+                    booking_id?: string | null;
+                    created_at?: string;
+                    id?: string;
+                    message: string;
+                    read_at?: string | null;
+                    shop_id?: string | null;
+                    title: string;
+                    type: string;
+                    user_id: string;
                 };
                 Update: {
-                    "booking_id"?: string | null;
-                    "created_at"?: string;
-                    "id"?: string;
-                    "message"?: string;
-                    "read_at"?: string | null;
-                    "shop_id"?: string | null;
-                    "title"?: string;
-                    "type"?: string;
-                    "user_id"?: string;
+                    booking_id?: string | null;
+                    created_at?: string;
+                    id?: string;
+                    message?: string;
+                    read_at?: string | null;
+                    shop_id?: string | null;
+                    title?: string;
+                    type?: string;
+                    user_id?: string;
                 };
                 Relationships: [
                     {
@@ -712,43 +709,42 @@ export type Database = {
                     }
                 ];
             };
-            "part_allocations": {
+            part_allocations: {
                 Row: {
-                    "allocated_at": string;
-                    "allocated_by": string;
-                    "booking_id": string;
-                    "created_at": string;
-                    "id": string;
-                    "part_id": string;
-                    "quantity": number;
-                    "released_at": string | null;
-                    "shop_id": string;
-                    "updated_at": string;
+                    allocated_at: string;
+                    allocated_by: string;
+                    booking_id: string;
+                    created_at: string;
+                    id: string;
+                    part_id: string;
+                    quantity: number;
+                    released_at: string | null;
+                    shop_id: string;
+                    updated_at: string;
                 };
-                ComputedFields: never;
                 Insert: {
-                    "allocated_at"?: string;
-                    "allocated_by": string;
-                    "booking_id": string;
-                    "created_at"?: string;
-                    "id"?: string;
-                    "part_id": string;
-                    "quantity": number;
-                    "released_at"?: string | null;
-                    "shop_id": string;
-                    "updated_at"?: string;
+                    allocated_at?: string;
+                    allocated_by: string;
+                    booking_id: string;
+                    created_at?: string;
+                    id?: string;
+                    part_id: string;
+                    quantity: number;
+                    released_at?: string | null;
+                    shop_id: string;
+                    updated_at?: string;
                 };
                 Update: {
-                    "allocated_at"?: string;
-                    "allocated_by"?: string;
-                    "booking_id"?: string;
-                    "created_at"?: string;
-                    "id"?: string;
-                    "part_id"?: string;
-                    "quantity"?: number;
-                    "released_at"?: string | null;
-                    "shop_id"?: string;
-                    "updated_at"?: string;
+                    allocated_at?: string;
+                    allocated_by?: string;
+                    booking_id?: string;
+                    created_at?: string;
+                    id?: string;
+                    part_id?: string;
+                    quantity?: number;
+                    released_at?: string | null;
+                    shop_id?: string;
+                    updated_at?: string;
                 };
                 Relationships: [
                     {
@@ -814,63 +810,61 @@ export type Database = {
                     }
                 ];
             };
-            "profiles": {
+            profiles: {
                 Row: {
-                    "created_at": string;
-                    "full_name": string;
-                    "id": string;
-                    "phone": string | null;
-                    "updated_at": string;
+                    created_at: string;
+                    full_name: string;
+                    id: string;
+                    phone: string | null;
+                    updated_at: string;
                 };
-                ComputedFields: never;
                 Insert: {
-                    "created_at"?: string;
-                    "full_name": string;
-                    "id": string;
-                    "phone"?: string | null;
-                    "updated_at"?: string;
+                    created_at?: string;
+                    full_name: string;
+                    id: string;
+                    phone?: string | null;
+                    updated_at?: string;
                 };
                 Update: {
-                    "created_at"?: string;
-                    "full_name"?: string;
-                    "id"?: string;
-                    "phone"?: string | null;
-                    "updated_at"?: string;
+                    created_at?: string;
+                    full_name?: string;
+                    id?: string;
+                    phone?: string | null;
+                    updated_at?: string;
                 };
                 Relationships: [
                 ];
             };
-            "purchase_order_items": {
+            purchase_order_items: {
                 Row: {
-                    "created_at": string;
-                    "id": string;
-                    "part_id": string;
-                    "purchase_order_id": string;
-                    "quantity_ordered": number;
-                    "quantity_received": number;
-                    "shop_id": string;
-                    "updated_at": string;
+                    created_at: string;
+                    id: string;
+                    part_id: string;
+                    purchase_order_id: string;
+                    quantity_ordered: number;
+                    quantity_received: number;
+                    shop_id: string;
+                    updated_at: string;
                 };
-                ComputedFields: never;
                 Insert: {
-                    "created_at"?: string;
-                    "id"?: string;
-                    "part_id": string;
-                    "purchase_order_id": string;
-                    "quantity_ordered": number;
-                    "quantity_received"?: number;
-                    "shop_id": string;
-                    "updated_at"?: string;
+                    created_at?: string;
+                    id?: string;
+                    part_id: string;
+                    purchase_order_id: string;
+                    quantity_ordered: number;
+                    quantity_received?: number;
+                    shop_id: string;
+                    updated_at?: string;
                 };
                 Update: {
-                    "created_at"?: string;
-                    "id"?: string;
-                    "part_id"?: string;
-                    "purchase_order_id"?: string;
-                    "quantity_ordered"?: number;
-                    "quantity_received"?: number;
-                    "shop_id"?: string;
-                    "updated_at"?: string;
+                    created_at?: string;
+                    id?: string;
+                    part_id?: string;
+                    purchase_order_id?: string;
+                    quantity_ordered?: number;
+                    quantity_received?: number;
+                    shop_id?: string;
+                    updated_at?: string;
                 };
                 Relationships: [
                     {
@@ -923,43 +917,42 @@ export type Database = {
                     }
                 ];
             };
-            "purchase_orders": {
+            purchase_orders: {
                 Row: {
-                    "booking_id": string | null;
-                    "created_at": string;
-                    "created_by": string;
-                    "id": string;
-                    "ordered_at": string;
-                    "received_at": string | null;
-                    "shop_id": string;
-                    "status": Database["public"]['Enums']["purchase_order_status"];
-                    "supplier_name": string | null;
-                    "updated_at": string;
+                    booking_id: string | null;
+                    created_at: string;
+                    created_by: string;
+                    id: string;
+                    ordered_at: string;
+                    received_at: string | null;
+                    shop_id: string;
+                    status: Database["public"]["Enums"]["purchase_order_status"];
+                    supplier_name: string | null;
+                    updated_at: string;
                 };
-                ComputedFields: never;
                 Insert: {
-                    "booking_id"?: string | null;
-                    "created_at"?: string;
-                    "created_by": string;
-                    "id"?: string;
-                    "ordered_at"?: string;
-                    "received_at"?: string | null;
-                    "shop_id": string;
-                    "status"?: Database["public"]['Enums']["purchase_order_status"];
-                    "supplier_name"?: string | null;
-                    "updated_at"?: string;
+                    booking_id?: string | null;
+                    created_at?: string;
+                    created_by: string;
+                    id?: string;
+                    ordered_at?: string;
+                    received_at?: string | null;
+                    shop_id: string;
+                    status?: Database["public"]["Enums"]["purchase_order_status"];
+                    supplier_name?: string | null;
+                    updated_at?: string;
                 };
                 Update: {
-                    "booking_id"?: string | null;
-                    "created_at"?: string;
-                    "created_by"?: string;
-                    "id"?: string;
-                    "ordered_at"?: string;
-                    "received_at"?: string | null;
-                    "shop_id"?: string;
-                    "status"?: Database["public"]['Enums']["purchase_order_status"];
-                    "supplier_name"?: string | null;
-                    "updated_at"?: string;
+                    booking_id?: string | null;
+                    created_at?: string;
+                    created_by?: string;
+                    id?: string;
+                    ordered_at?: string;
+                    received_at?: string | null;
+                    shop_id?: string;
+                    status?: Database["public"]["Enums"]["purchase_order_status"];
+                    supplier_name?: string | null;
+                    updated_at?: string;
                 };
                 Relationships: [
                     {
@@ -1012,43 +1005,42 @@ export type Database = {
                     }
                 ];
             };
-            "qc_issues": {
+            qc_issues: {
                 Row: {
-                    "booking_id": string;
-                    "created_at": string;
-                    "description": string;
-                    "id": string;
-                    "qc_run_id": string;
-                    "reported_by": string;
-                    "resolved_at": string | null;
-                    "shop_id": string;
-                    "title": string;
-                    "updated_at": string;
+                    booking_id: string;
+                    created_at: string;
+                    description: string;
+                    id: string;
+                    qc_run_id: string;
+                    reported_by: string;
+                    resolved_at: string | null;
+                    shop_id: string;
+                    title: string;
+                    updated_at: string;
                 };
-                ComputedFields: never;
                 Insert: {
-                    "booking_id": string;
-                    "created_at"?: string;
-                    "description": string;
-                    "id"?: string;
-                    "qc_run_id": string;
-                    "reported_by": string;
-                    "resolved_at"?: string | null;
-                    "shop_id": string;
-                    "title": string;
-                    "updated_at"?: string;
+                    booking_id: string;
+                    created_at?: string;
+                    description: string;
+                    id?: string;
+                    qc_run_id: string;
+                    reported_by: string;
+                    resolved_at?: string | null;
+                    shop_id: string;
+                    title: string;
+                    updated_at?: string;
                 };
                 Update: {
-                    "booking_id"?: string;
-                    "created_at"?: string;
-                    "description"?: string;
-                    "id"?: string;
-                    "qc_run_id"?: string;
-                    "reported_by"?: string;
-                    "resolved_at"?: string | null;
-                    "shop_id"?: string;
-                    "title"?: string;
-                    "updated_at"?: string;
+                    booking_id?: string;
+                    created_at?: string;
+                    description?: string;
+                    id?: string;
+                    qc_run_id?: string;
+                    reported_by?: string;
+                    resolved_at?: string | null;
+                    shop_id?: string;
+                    title?: string;
+                    updated_at?: string;
                 };
                 Relationships: [
                     {
@@ -1116,46 +1108,45 @@ export type Database = {
                     }
                 ];
             };
-            "qc_runs": {
+            qc_runs: {
                 Row: {
-                    "booking_id": string;
-                    "checklist": NonNullable<Json>;
-                    "created_at": string;
-                    "finished_at": string | null;
-                    "id": string;
-                    "inspector_user_id": string;
-                    "notes": string;
-                    "passed": boolean | null;
-                    "shop_id": string;
-                    "started_at": string;
-                    "updated_at": string;
+                    booking_id: string;
+                    checklist: Json;
+                    created_at: string;
+                    finished_at: string | null;
+                    id: string;
+                    inspector_user_id: string;
+                    notes: string;
+                    passed: boolean | null;
+                    shop_id: string;
+                    started_at: string;
+                    updated_at: string;
                 };
-                ComputedFields: never;
                 Insert: {
-                    "booking_id": string;
-                    "checklist"?: NonNullable<Json>;
-                    "created_at"?: string;
-                    "finished_at"?: string | null;
-                    "id"?: string;
-                    "inspector_user_id": string;
-                    "notes"?: string;
-                    "passed"?: boolean | null;
-                    "shop_id": string;
-                    "started_at"?: string;
-                    "updated_at"?: string;
+                    booking_id: string;
+                    checklist?: Json;
+                    created_at?: string;
+                    finished_at?: string | null;
+                    id?: string;
+                    inspector_user_id: string;
+                    notes?: string;
+                    passed?: boolean | null;
+                    shop_id: string;
+                    started_at?: string;
+                    updated_at?: string;
                 };
                 Update: {
-                    "booking_id"?: string;
-                    "checklist"?: NonNullable<Json>;
-                    "created_at"?: string;
-                    "finished_at"?: string | null;
-                    "id"?: string;
-                    "inspector_user_id"?: string;
-                    "notes"?: string;
-                    "passed"?: boolean | null;
-                    "shop_id"?: string;
-                    "started_at"?: string;
-                    "updated_at"?: string;
+                    booking_id?: string;
+                    checklist?: Json;
+                    created_at?: string;
+                    finished_at?: string | null;
+                    id?: string;
+                    inspector_user_id?: string;
+                    notes?: string;
+                    passed?: boolean | null;
+                    shop_id?: string;
+                    started_at?: string;
+                    updated_at?: string;
                 };
                 Relationships: [
                     {
@@ -1208,40 +1199,39 @@ export type Database = {
                     }
                 ];
             };
-            "services": {
+            services: {
                 Row: {
-                    "active": boolean;
-                    "base_price_pkr": number | null;
-                    "created_at": string;
-                    "description": string;
-                    "duration_minutes": number;
-                    "id": string;
-                    "name": string;
-                    "shop_id": string;
-                    "updated_at": string;
+                    active: boolean;
+                    base_price_pkr: number | null;
+                    created_at: string;
+                    description: string;
+                    duration_minutes: number;
+                    id: string;
+                    name: string;
+                    shop_id: string;
+                    updated_at: string;
                 };
-                ComputedFields: never;
                 Insert: {
-                    "active"?: boolean;
-                    "base_price_pkr"?: number | null;
-                    "created_at"?: string;
-                    "description"?: string;
-                    "duration_minutes": number;
-                    "id"?: string;
-                    "name": string;
-                    "shop_id": string;
-                    "updated_at"?: string;
+                    active?: boolean;
+                    base_price_pkr?: number | null;
+                    created_at?: string;
+                    description?: string;
+                    duration_minutes: number;
+                    id?: string;
+                    name: string;
+                    shop_id: string;
+                    updated_at?: string;
                 };
                 Update: {
-                    "active"?: boolean;
-                    "base_price_pkr"?: number | null;
-                    "created_at"?: string;
-                    "description"?: string;
-                    "duration_minutes"?: number;
-                    "id"?: string;
-                    "name"?: string;
-                    "shop_id"?: string;
-                    "updated_at"?: string;
+                    active?: boolean;
+                    base_price_pkr?: number | null;
+                    created_at?: string;
+                    description?: string;
+                    duration_minutes?: number;
+                    id?: string;
+                    name?: string;
+                    shop_id?: string;
+                    updated_at?: string;
                 };
                 Relationships: [
                     {
@@ -1268,34 +1258,33 @@ export type Database = {
                     }
                 ];
             };
-            "shop_memberships": {
+            shop_memberships: {
                 Row: {
-                    "active": boolean;
-                    "created_at": string;
-                    "id": string;
-                    "role": Database["public"]['Enums']["shop_role"];
-                    "shop_id": string;
-                    "updated_at": string;
-                    "user_id": string;
+                    active: boolean;
+                    created_at: string;
+                    id: string;
+                    role: Database["public"]["Enums"]["shop_role"];
+                    shop_id: string;
+                    updated_at: string;
+                    user_id: string;
                 };
-                ComputedFields: never;
                 Insert: {
-                    "active"?: boolean;
-                    "created_at"?: string;
-                    "id"?: string;
-                    "role": Database["public"]['Enums']["shop_role"];
-                    "shop_id": string;
-                    "updated_at"?: string;
-                    "user_id": string;
+                    active?: boolean;
+                    created_at?: string;
+                    id?: string;
+                    role: Database["public"]["Enums"]["shop_role"];
+                    shop_id: string;
+                    updated_at?: string;
+                    user_id: string;
                 };
                 Update: {
-                    "active"?: boolean;
-                    "created_at"?: string;
-                    "id"?: string;
-                    "role"?: Database["public"]['Enums']["shop_role"];
-                    "shop_id"?: string;
-                    "updated_at"?: string;
-                    "user_id"?: string;
+                    active?: boolean;
+                    created_at?: string;
+                    id?: string;
+                    role?: Database["public"]["Enums"]["shop_role"];
+                    shop_id?: string;
+                    updated_at?: string;
+                    user_id?: string;
                 };
                 Relationships: [
                     {
@@ -1333,58 +1322,57 @@ export type Database = {
                     }
                 ];
             };
-            "shops": {
+            shops: {
                 Row: {
-                    "active": boolean;
-                    "address": string;
-                    "city": string;
-                    "created_at": string;
-                    "id": string;
-                    "logo_url": string | null;
-                    "name": string;
-                    "owner_user_id": string;
-                    "phone": string;
-                    "slot_capacity": number;
-                    "slot_duration_minutes": number;
-                    "slug": string;
-                    "timezone": string;
-                    "updated_at": string;
-                    "working_hours": NonNullable<Json>;
+                    active: boolean;
+                    address: string;
+                    city: string;
+                    created_at: string;
+                    id: string;
+                    logo_url: string | null;
+                    name: string;
+                    owner_user_id: string;
+                    phone: string;
+                    slot_capacity: number;
+                    slot_duration_minutes: number;
+                    slug: string;
+                    timezone: string;
+                    updated_at: string;
+                    working_hours: Json;
                 };
-                ComputedFields: never;
                 Insert: {
-                    "active"?: boolean;
-                    "address": string;
-                    "city": string;
-                    "created_at"?: string;
-                    "id"?: string;
-                    "logo_url"?: string | null;
-                    "name": string;
-                    "owner_user_id": string;
-                    "phone": string;
-                    "slot_capacity"?: number;
-                    "slot_duration_minutes"?: number;
-                    "slug": string;
-                    "timezone"?: string;
-                    "updated_at"?: string;
-                    "working_hours"?: NonNullable<Json>;
+                    active?: boolean;
+                    address: string;
+                    city: string;
+                    created_at?: string;
+                    id?: string;
+                    logo_url?: string | null;
+                    name: string;
+                    owner_user_id: string;
+                    phone: string;
+                    slot_capacity?: number;
+                    slot_duration_minutes?: number;
+                    slug: string;
+                    timezone?: string;
+                    updated_at?: string;
+                    working_hours?: Json;
                 };
                 Update: {
-                    "active"?: boolean;
-                    "address"?: string;
-                    "city"?: string;
-                    "created_at"?: string;
-                    "id"?: string;
-                    "logo_url"?: string | null;
-                    "name"?: string;
-                    "owner_user_id"?: string;
-                    "phone"?: string;
-                    "slot_capacity"?: number;
-                    "slot_duration_minutes"?: number;
-                    "slug"?: string;
-                    "timezone"?: string;
-                    "updated_at"?: string;
-                    "working_hours"?: NonNullable<Json>;
+                    active?: boolean;
+                    address?: string;
+                    city?: string;
+                    created_at?: string;
+                    id?: string;
+                    logo_url?: string | null;
+                    name?: string;
+                    owner_user_id?: string;
+                    phone?: string;
+                    slot_capacity?: number;
+                    slot_duration_minutes?: number;
+                    slug?: string;
+                    timezone?: string;
+                    updated_at?: string;
+                    working_hours?: Json;
                 };
                 Relationships: [
                     {
@@ -1400,43 +1388,42 @@ export type Database = {
                     }
                 ];
             };
-            "vehicles": {
+            vehicles: {
                 Row: {
-                    "color": string | null;
-                    "created_at": string;
-                    "customer_id": string;
-                    "id": string;
-                    "make": string;
-                    "mileage": number | null;
-                    "model": string;
-                    "registration_plate": string;
-                    "updated_at": string;
-                    "year": number;
+                    color: string | null;
+                    created_at: string;
+                    customer_id: string;
+                    id: string;
+                    make: string;
+                    mileage: number | null;
+                    model: string;
+                    registration_plate: string;
+                    updated_at: string;
+                    year: number;
                 };
-                ComputedFields: never;
                 Insert: {
-                    "color"?: string | null;
-                    "created_at"?: string;
-                    "customer_id": string;
-                    "id"?: string;
-                    "make": string;
-                    "mileage"?: number | null;
-                    "model": string;
-                    "registration_plate": string;
-                    "updated_at"?: string;
-                    "year": number;
+                    color?: string | null;
+                    created_at?: string;
+                    customer_id: string;
+                    id?: string;
+                    make: string;
+                    mileage?: number | null;
+                    model: string;
+                    registration_plate: string;
+                    updated_at?: string;
+                    year: number;
                 };
                 Update: {
-                    "color"?: string | null;
-                    "created_at"?: string;
-                    "customer_id"?: string;
-                    "id"?: string;
-                    "make"?: string;
-                    "mileage"?: number | null;
-                    "model"?: string;
-                    "registration_plate"?: string;
-                    "updated_at"?: string;
-                    "year"?: number;
+                    color?: string | null;
+                    created_at?: string;
+                    customer_id?: string;
+                    id?: string;
+                    make?: string;
+                    mileage?: number | null;
+                    model?: string;
+                    registration_plate?: string;
+                    updated_at?: string;
+                    year?: number;
                 };
                 Relationships: [
                     {
@@ -1454,15 +1441,14 @@ export type Database = {
             };
         };
         Views: {
-            "public_appointment_slots": {
+            public_appointment_slots: {
                 Row: {
-                    "capacity": number | null;
-                    "ends_at": string | null;
-                    "id": string | null;
-                    "shop_id": string | null;
-                    "starts_at": string | null;
+                    capacity: number | null;
+                    ends_at: string | null;
+                    id: string | null;
+                    shop_id: string | null;
+                    starts_at: string | null;
                 };
-                ComputedFields: never;
                 Relationships: [
                     {
                         foreignKeyName: "appointment_slots_shop_id_fkey";
@@ -1488,16 +1474,15 @@ export type Database = {
                     }
                 ];
             };
-            "public_services": {
+            public_services: {
                 Row: {
-                    "base_price_pkr": number | null;
-                    "description": string | null;
-                    "duration_minutes": number | null;
-                    "id": string | null;
-                    "name": string | null;
-                    "shop_id": string | null;
+                    base_price_pkr: number | null;
+                    description: string | null;
+                    duration_minutes: number | null;
+                    id: string | null;
+                    name: string | null;
+                    shop_id: string | null;
                 };
-                ComputedFields: never;
                 Relationships: [
                     {
                         foreignKeyName: "services_shop_id_fkey";
@@ -1523,46 +1508,45 @@ export type Database = {
                     }
                 ];
             };
-            "public_shops": {
+            public_shops: {
                 Row: {
-                    "address": string | null;
-                    "city": string | null;
-                    "id": string | null;
-                    "logo_url": string | null;
-                    "name": string | null;
-                    "phone": string | null;
-                    "slot_capacity": number | null;
-                    "slot_duration_minutes": number | null;
-                    "slug": string | null;
-                    "timezone": string | null;
-                    "working_hours": Json | null;
+                    address: string | null;
+                    city: string | null;
+                    id: string | null;
+                    logo_url: string | null;
+                    name: string | null;
+                    phone: string | null;
+                    slot_capacity: number | null;
+                    slot_duration_minutes: number | null;
+                    slug: string | null;
+                    timezone: string | null;
+                    working_hours: Json | null;
                 };
-                ComputedFields: never;
                 Insert: {
-                    "address"?: string | null;
-                    "city"?: string | null;
-                    "id"?: string | null;
-                    "logo_url"?: string | null;
-                    "name"?: string | null;
-                    "phone"?: string | null;
-                    "slot_capacity"?: number | null;
-                    "slot_duration_minutes"?: number | null;
-                    "slug"?: string | null;
-                    "timezone"?: string | null;
-                    "working_hours"?: Json | null;
+                    address?: string | null;
+                    city?: string | null;
+                    id?: string | null;
+                    logo_url?: string | null;
+                    name?: string | null;
+                    phone?: string | null;
+                    slot_capacity?: number | null;
+                    slot_duration_minutes?: number | null;
+                    slug?: string | null;
+                    timezone?: string | null;
+                    working_hours?: Json | null;
                 };
                 Update: {
-                    "address"?: string | null;
-                    "city"?: string | null;
-                    "id"?: string | null;
-                    "logo_url"?: string | null;
-                    "name"?: string | null;
-                    "phone"?: string | null;
-                    "slot_capacity"?: number | null;
-                    "slot_duration_minutes"?: number | null;
-                    "slug"?: string | null;
-                    "timezone"?: string | null;
-                    "working_hours"?: Json | null;
+                    address?: string | null;
+                    city?: string | null;
+                    id?: string | null;
+                    logo_url?: string | null;
+                    name?: string | null;
+                    phone?: string | null;
+                    slot_capacity?: number | null;
+                    slot_duration_minutes?: number | null;
+                    slug?: string | null;
+                    timezone?: string | null;
+                    working_hours?: Json | null;
                 };
                 Relationships: [
                 ];
@@ -1572,24 +1556,24 @@ export type Database = {
             [_ in never]: never;
         };
         Enums: {
-            "booking_status": "PENDING" | "CONFIRMED" | "ASSIGNED" | "INSPECTING" | "ESTIMATE_REVIEW" | "AWAITING_CUSTOMER" | "ESTIMATE_APPROVED" | "ESTIMATE_REJECTED" | "PARTS_PENDING" | "PARTS_ORDERED" | "PARTS_READY" | "IN_REPAIR" | "QC_PENDING" | "QC_IN_PROGRESS" | "READY_FOR_PICKUP" | "COMPLETED" | "CANCELLED";
-            "estimate_item_kind": "PART" | "LABOUR";
-            "estimate_state": "DRAFT" | "REVIEW" | "SENT" | "APPROVED" | "REJECTED";
-            "purchase_order_status": "ORDERED" | "PARTIALLY_RECEIVED" | "RECEIVED";
-            "shop_role": "OWNER" | "SA" | "TECHNICIAN" | "PARTS" | "QC";
+            booking_status: "PENDING" | "CONFIRMED" | "ASSIGNED" | "INSPECTING" | "ESTIMATE_REVIEW" | "AWAITING_CUSTOMER" | "ESTIMATE_APPROVED" | "ESTIMATE_REJECTED" | "PARTS_PENDING" | "PARTS_ORDERED" | "PARTS_READY" | "IN_REPAIR" | "QC_PENDING" | "QC_IN_PROGRESS" | "READY_FOR_PICKUP" | "COMPLETED" | "CANCELLED";
+            estimate_item_kind: "PART" | "LABOUR";
+            estimate_state: "DRAFT" | "REVIEW" | "SENT" | "APPROVED" | "REJECTED";
+            purchase_order_status: "ORDERED" | "PARTIALLY_RECEIVED" | "RECEIVED";
+            shop_role: "OWNER" | "SA" | "TECHNICIAN" | "PARTS" | "QC";
         };
         CompositeTypes: {
             [_ in never]: never;
         };
     };
 };
-type DatabaseWithoutInternals = Omit<Database, '__InternalSupabase'>;
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
 type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">];
 export type Tables<DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] & DefaultSchema["Views"]) | {
     schema: keyof DatabaseWithoutInternals;
-}, TableName extends DefaultSchemaTableNameOrOptions extends {
+}, TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
-} ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] & DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"]) : never = never> = DefaultSchemaTableNameOrOptions extends {
+} ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] & DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"]) : never) = never> = DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
 } ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] & DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
     Row: infer R;
@@ -1598,9 +1582,9 @@ export type Tables<DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema[
 } ? R : never : never;
 export type TablesInsert<DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"] | {
     schema: keyof DatabaseWithoutInternals;
-}, TableName extends DefaultSchemaTableNameOrOptions extends {
+}, TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
-} ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] : never = never> = DefaultSchemaTableNameOrOptions extends {
+} ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] : never) = never> = DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
 } ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
     Insert: infer I;
@@ -1609,9 +1593,9 @@ export type TablesInsert<DefaultSchemaTableNameOrOptions extends keyof DefaultSc
 } ? I : never : never;
 export type TablesUpdate<DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"] | {
     schema: keyof DatabaseWithoutInternals;
-}, TableName extends DefaultSchemaTableNameOrOptions extends {
+}, TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
-} ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] : never = never> = DefaultSchemaTableNameOrOptions extends {
+} ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] : never) = never> = DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
 } ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
     Update: infer U;
@@ -1620,22 +1604,44 @@ export type TablesUpdate<DefaultSchemaTableNameOrOptions extends keyof DefaultSc
 } ? U : never : never;
 export type Enums<DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"] | {
     schema: keyof DatabaseWithoutInternals;
-}, EnumName extends DefaultSchemaEnumNameOrOptions extends {
+}, EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
-} ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"] : never = never> = DefaultSchemaEnumNameOrOptions extends {
+} ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"] : never) = never> = DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
 } ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName] : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"] ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions] : never;
 export type CompositeTypes<PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"] | {
     schema: keyof DatabaseWithoutInternals;
-}, CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+}, CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
-} ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"] : never = never> = PublicCompositeTypeNameOrOptions extends {
+} ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"] : never) = never> = PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
 } ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName] : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"] ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions] : never;
 export const Constants = {
-    "public": {
+    public: {
         Enums: {
-            "booking_status": ["PENDING", "CONFIRMED", "ASSIGNED", "INSPECTING", "ESTIMATE_REVIEW", "AWAITING_CUSTOMER", "ESTIMATE_APPROVED", "ESTIMATE_REJECTED", "PARTS_PENDING", "PARTS_ORDERED", "PARTS_READY", "IN_REPAIR", "QC_PENDING", "QC_IN_PROGRESS", "READY_FOR_PICKUP", "COMPLETED", "CANCELLED"], "estimate_item_kind": ["PART", "LABOUR"], "estimate_state": ["DRAFT", "REVIEW", "SENT", "APPROVED", "REJECTED"], "purchase_order_status": ["ORDERED", "PARTIALLY_RECEIVED", "RECEIVED"], "shop_role": ["OWNER", "SA", "TECHNICIAN", "PARTS", "QC"]
-        }
-    }
+            booking_status: [
+                "PENDING",
+                "CONFIRMED",
+                "ASSIGNED",
+                "INSPECTING",
+                "ESTIMATE_REVIEW",
+                "AWAITING_CUSTOMER",
+                "ESTIMATE_APPROVED",
+                "ESTIMATE_REJECTED",
+                "PARTS_PENDING",
+                "PARTS_ORDERED",
+                "PARTS_READY",
+                "IN_REPAIR",
+                "QC_PENDING",
+                "QC_IN_PROGRESS",
+                "READY_FOR_PICKUP",
+                "COMPLETED",
+                "CANCELLED",
+            ],
+            estimate_item_kind: ["PART", "LABOUR"],
+            estimate_state: ["DRAFT", "REVIEW", "SENT", "APPROVED", "REJECTED"],
+            purchase_order_status: ["ORDERED", "PARTIALLY_RECEIVED", "RECEIVED"],
+            shop_role: ["OWNER", "SA", "TECHNICIAN", "PARTS", "QC"],
+        },
+    },
 } as const;

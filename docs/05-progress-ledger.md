@@ -45,11 +45,11 @@ This ledger tracks phase status, verification, migration IDs, and open issues. U
 | B11 | PASSED | HEAD at B11 checkpoint, 2026-10-10 Asia/Karachi | No new migration; Cloud demo data provisioned with `bayflow-demo-b11-v1` marker | Native 131/131, B11 static 2/2, backend typecheck exit 0; Cloud demo users 16/16 sign-in verified; Cloud lint clean; final dry-run up to date; post-demo RLS 81/81 and B10 1/1; see backend/docs/b11-demo-provisioning-verification.md | No workflow booking prefilled; demo password is local-only ignored file; user types change preserved |
 | B12 | NOT_STARTED | N/A | N/A | N/A | Requires B11 + F13 |
 | F00 | NOT_STARTED | N/A | N/A | N/A | Requires B00 |
-| F01 | NOT_STARTED | N/A | N/A | N/A | Requires F00 + B04 |
-| F02 | NOT_STARTED | N/A | N/A | N/A | Requires F01 + B04 |
-| F03 | NOT_STARTED | N/A | N/A | N/A | Requires B05 + F02 |
-| F04 | NOT_STARTED | N/A | N/A | N/A | Requires B05 + B06 + F03 |
-| F05 | NOT_STARTED | N/A | N/A | N/A | Requires B03 + B06 + F00 |
+| F01 | PASSED | Working-tree checkpoint, 2026-10-10 Asia/Karachi; backend dependency 1128cbe | None; Cloud read-only | 150/150 tests, typecheck/lint/build exit 0; production browser verified Cloud shops/services, city filter 3 -> 2, empty/clear, 1440px/375px layouts and focus; see docs/verification/f01/README.md | Minimum F00-style public foundation included under user amendment; full F00/B00 remain open; temporary call CTA superseded by F02 profile navigation |
+| F02 | PASSED | Working-tree checkpoint, 2026-10-10 Asia/Karachi | None | 160/160 frontend tests at F02 gate; typecheck/lint/build exit 0; profile/availability DOM tests; final combined suite 195/195; see docs/verification/f02/README.md | Booking destinations completed in authorized F03; manual visual review deferred at user request |
+| F03 | PASSED | Working-tree checkpoint, 2026-10-10 Asia/Karachi | None | 195/195 frontend tests across 20 files; typecheck/lint/build exit 0; known-service and symptoms flows, inline auth, durable draft, lost-response replay after reload, double-submit/slot/storage/account guards; see docs/verification/f03/README.md | User waived browser/start-server checks; real Cloud booking/email round trip remains manual integration verification; F04 dashboard deferred |
+| F04 | PASSED | Working-tree checkpoint, 2026-10-10 Asia/Karachi | None | 208/208 tests across 21 files; typecheck/lint/build exit 0; see docs/verification/f04/README.md | Browser and Cloud email round trip deferred at user request; estimates read-only until F09 |
+| F05 | PASSED | Working-tree checkpoint, 2026-10-10 Asia/Karachi | User approved read-only detail; allowed-action controls deferred to F07 onward | 231/231 tests across 23 files; typecheck/lint/build/diff-check exit 0; see docs/verification/f05/README.md | Minimum shared shell foundation only; full F00 and F06 owner management remain deferred; no browser/Cloud mutation run |
 | F06 | NOT_STARTED | N/A | N/A | N/A | Requires B04 + B03 + F05 |
 | F07 | NOT_STARTED | N/A | N/A | N/A | Requires B06 + F05 |
 | F08 | NOT_STARTED | N/A | N/A | N/A | Requires B07 + F07 |

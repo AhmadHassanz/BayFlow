@@ -92,7 +92,7 @@ It returns 429 after that bound. Distributed rate limiting is not claimed.
 
 ## Configuration
 
-Copy the root `.env.example` to `frontend/.env.local`, then set the project URL,
+Copy `frontend/.env.example` to `frontend/.env.local`, then set the project URL,
 publishable key, site origin, and exactly one server-only secret/legacy admin key.
 Do not copy CLI credentials. Public environment validation rejects service-role
 and secret keys. Configure Cloud Auth Site URL and allowlist the exact

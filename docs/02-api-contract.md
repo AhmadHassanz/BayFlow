@@ -257,7 +257,86 @@ against audited views; owner writes use verified user-scoped clients. B04 has no
 UI or booking mutation. Cloud migration application remains explicitly approved
 per migration; see [B04 evidence](../backend/docs/b04-catalog-verification.md).
 
+## F01 Public Directory Integration
+
+The public home consumes the existing `GET /api/v1/shops` and per-shop
+`GET /api/v1/shops/[id]/services?page=1` routes through a browser-only typed client.
+Responses are validated against the B04 public DTOs and success envelope, fetched
+with no-store, and rendered without local catalog fixtures. City remains an exact
+case-insensitive match; name is a literal substring. Submitting either filter
+resets pagination to page 1; clearing restores the unfiltered directory. Result
+counts and pagination come from the server. Cards show up to three returned service
+names and the authoritative remaining service count, without downloading later
+service pages. A services failure does not hide a successfully loaded workshop.
+
+Loading, no results, network/server failure, forbidden and unavailable workshop
+responses have explicit states. Failed requests can be retried; requests time out
+after 15 seconds and are cancelled when superseded or unmounted. Raw server errors
+are never displayed. This integration adds no API route, write or auth surface.
+
+Following the user's 2026-10-10 delegation to choose the prerequisite order and
+resolve the CTA conflict, F01 uses working index anchors and `tel:` links derived
+from each shop's API phone. “Call to arrange a visit” initiates the device dialer;
+it does not create a booking. Online profile/booking links wait for F02/F03 so no
+unfinished route is advertised. Seed fixture phone numbers are not verified
+operational phone lines.
+
 ## B05 Booking Creation Contract
+
+### F02/F03 frontend integration (2026-10-10)
+
+Public `/shops/[slug]` and `/book/[shopId]` server pages validate identifiers and
+load the same anonymous `shopDetail` service/projection used by the B04 GET
+handlers. This avoids a server-to-itself HTTP call and does not introduce another
+backend or expose base tables. Unpublished/missing shops invoke Next not-found;
+other read failures reach a safe retry boundary. Client service pagination and
+date availability use the existing `/api/v1/shops/[id]/services` and `/slots`
+handlers with DTO validation, no-store and bounded requests. Public profile CTAs
+carry the authoritative shop ID plus optional `service`, `date` and `slot` hints;
+the wizard validates those hints and checks the service/slot relationship again.
+
+The F03 wizard has five steps: concern, appointment, vehicle, account, review.
+It uses React Hook Form and the existing Zod booking/vehicle contracts. Customers
+can select up to 50 services or provide meaningful symptoms, without mandatory
+images or a diagnosis. Prices displayed from the catalog are guides, not trusted
+estimate totals and are never sent in a booking mutation. Appointments are shown
+in the workshop timezone, using its 14-local-day horizon and remaining capacity.
+
+The account step uses the existing login/signup/logout Server Actions and
+`GET /api/v1/me`. Signup now accepts an optional **second action argument**
+`next?: string`, sanitized with the existing `safeNext`, for the email confirmation
+callback. The original strict signup payload and default callback behavior remain
+unchanged; no role/actor input or auth endpoint was added. Existing emails are
+directed to sign in, never overwritten. Confirmation-dependent signup never
+submits a booking until a verified session exists. F04's standalone auth pages,
+dashboard, timeline and account routing are not part of this implementation.
+
+Versioned per-shop local drafts contain form values, step, save time, an optional
+actor-bound pending booking request and an optional authoritative creation receipt.
+Passwords, tokens, Auth sessions and account form fields are excluded. Drafts stay
+on this device until cleared; the UI explains that vehicle details and symptoms
+are included. Corrupt, unknown-version and cross-shop drafts are ignored. URL hints
+cannot modify an uncertain pending request. Normal drafts with elapsed dates are
+returned to the current date horizon. A selected service from a later catalog page
+is recovered from the existing paginated services route.
+
+Before a fresh `POST /api/v1/bookings`, the wizard re-verifies `/me`, rechecks the
+slot for guidance, validates the full B05 payload and durably saves one UUID request
+key plus the exact actor-bound payload. SQL remains the authoritative capacity and
+authorization check. Double clicks are blocked. A network loss, malformed success
+response or server failure leaves the pending intent locked to its original key;
+reloads and retries replay that exact request without rechecking slot capacity,
+because a successful original booking may itself have filled the slot. A changed
+actor cannot replay it. Authoritative slot/vehicle/validation failures allow
+correction; 401 returns to inline authentication. Uncertain intents cannot be
+cleared or silently changed into a second booking.
+
+Creation/replay responses navigate to `/book/[shopId]?booking=[bookingId]`.
+That F03 confirmation uses the existing guarded `GET /api/v1/bookings/[id]`;
+it never fabricates a booking or trusts the local receipt for private data. Signed
+out visitors authenticate inline, and 403/404 responses expose no booking details.
+This keeps the successful flow usable before F04's customer workspace exists.
+No new SQL migration, API route, booking status or RLS policy was needed.
 
 `POST /api/v1/bookings` implements the frozen Booking Payload above. Auth is
 verified with `getUser()` and the operation uses the user's JWT. No Admin client
@@ -452,3 +531,59 @@ Booking detail adds `qcRuns[]` and `qcIssues[]` for authorized actors. Existing
 role-scoped read guards still apply; a QC user who loses visibility after passing
 or failing sees empty detail arrays through the returned projection, while audit
 rows remain in the database. B09 adds no payment, invoice, customer survey or UI.
+
+## F04 customer workspace integration (2026-10-10)
+
+`/login` and `/signup` use the existing same-origin Supabase SSR Server Actions.
+A sanitized `next` preserves booking resumption and is passed through signup email
+confirmation; missing/unsafe UI destinations resolve to `/customer`. The legacy
+callback fallback `/api/v1/me` remains unchanged for other API consumers.
+Customer page entry verifies Auth with `getUser`, synchronizes the profile and
+reads the same active membership projection as `/api/v1/me`. Cookie refresh covers
+customer, auth entry and booking pages. No token or credential enters UI props.
+
+The ledger reads GET `/api/v1/me/bookings`, detail reads GET `/api/v1/bookings/[id]`,
+and the separate summary reads GET `/api/v1/notifications?unread=true&limit=3`.
+All are same-origin, no-store, abortable and schema validated. API ownership/RLS
+remains authoritative; the customer UI additionally suppresses mismatched actor
+records. No shop names, vehicle labels or appointment times are fabricated when
+absent from booking DTOs. Creation timestamps are explicitly labelled as recorded,
+not appointment times, and displayed in PKT. Completed/cancelled visits are history;
+timelines sort actual API events chronologically. Next-owner copy is descriptive,
+not an authorization decision. Estimate summaries contain only returned snapshots;
+approval/rejection and pickup actions remain later frontend phases.
+
+## F05 workspace integration (2026-10-10)
+
+Scope amendment: the user explicitly chose the authenticated shell and shared
+read-only detail, deferring action controls to F07 onward. `bookingDetailOutput`
+does not return allowed actions. This phase adds no speculative permission DTO,
+mutation button, database migration or API endpoint.
+
+Staff pages verify Auth and active per-shop memberships on the server using the
+same projection as GET `/api/v1/me`. Shop header/switcher metadata is selected
+from existing `shops(id,name,city,timezone)` with the authenticated RLS client,
+restricted to those memberships. Inactive, foreign-user or absent memberships
+never create navigation options. The schema permits one membership role per
+user/shop; switching selects a real shop/membership, never impersonates a role.
+The owner entry `/owner` requires an active OWNER membership. Its switcher may
+also show that user's actual staff memberships in other shops. Owner metrics,
+shop creation, settings and team controls remain F06.
+
+Nested routes reuse the existing `[slug]` filesystem parameter (Next.js forbids
+siblings with different dynamic parameter names). Public `/shops/[slug]` remains
+a slug-based profile; `/shops/[slug]/advisor|technician|parts|qc|bookings/[id]`
+requires the dynamic value to be a UUID shop ID. Wrong role/shop pages return a
+safe unavailable/not-found view before requesting shop metadata. Default sign-in
+without a requested return path resolves verified memberships: owner -> `/owner`,
+otherwise role-specific workspace, otherwise `/customer`. Explicit safe customer
+or booking return paths are preserved. Session refresh covers all private routes.
+
+Role landing views use GET `/api/v1/shops/[id]/bookings?page=N&assignee=all`.
+Its SQL already restricts technicians/parts to assigned work and QC to unclaimed
+QC work plus claimed jobs. F05 QC therefore uses this combined role-scoped list,
+not the narrower unclaimed-only `/qc-queue` endpoint. Pagination follows the
+existing 50-row contract; no total count is invented. Shared detail uses GET
+`/api/v1/bookings/[id]` plus an additional shop-ID check. RLS/RPC access remains
+authoritative if memberships change after rendering. All reads handle session
+expiry, forbidden/not-found, network failure, retry, loading and empty states.

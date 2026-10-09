@@ -57,6 +57,16 @@ it('signup refuses role metadata and duplicate-email obfuscated identities', asy
   client.auth.signUp.mockResolvedValue({ data: { user: { identities: [] }, session: null }, error: null });
   expect((await signup({ fullName: 'Name', email: authUser.email, password })).error).toContain('sign in');
 });
+
+it('signup preserves a safe booking return path in email confirmation without permitting an external redirect', async () => {
+  const client = setup();
+  await signup({ fullName: 'Name', email: authUser.email, password }, '/book/b1100000-0000-4000-8000-000000001001?resume=1');
+  const callback = new URL(client.auth.signUp.mock.calls[0][0].options.emailRedirectTo);
+  expect(callback.pathname).toBe('/auth/callback');
+  expect(callback.searchParams.get('next')).toBe('/book/b1100000-0000-4000-8000-000000001001?resume=1');
+  await signup({ fullName: 'Name', email: authUser.email, password }, 'https://attacker.test');
+  expect(new URL(client.auth.signUp.mock.calls[1][0].options.emailRedirectTo).searchParams.get('next')).toBe('/api/v1/me');
+});
 it('login sets the Supabase cookie session, syncs profile, and returns no token/password', async () => {
   const client = setup();
   const result = await login({ email: authUser.email, password });

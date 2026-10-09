@@ -1,0 +1,2 @@
+import Link from 'next/link';
+export default function NotFound() { return <main className="container customer-main"><div className="workspace-heading"><div><p className="eyebrow">Workspace unavailable</p><h1>Check your workshop.</h1><p>This workspace is unavailable for your account. Return to your ledger to choose an active membership.</p></div></div><Link className="button" href="/customer">Return to your ledger</Link></main>; }

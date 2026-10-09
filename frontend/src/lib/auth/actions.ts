@@ -5,6 +5,7 @@ import { publicEnvironment } from '@/lib/supabase/env';
 import { loginInput, signupInput } from '@/lib/contracts/auth';
 import { syncProfile, requireIdentity } from './session';
 import { ApiError } from '@/lib/api/response';
+import { safeNext } from './redirect';
 
 async function sameOrigin() {
   if ((await headers()).get('origin') !== new URL(publicEnvironment().siteUrl).origin)
@@ -12,13 +13,15 @@ async function sameOrigin() {
 }
 // Server Actions are the auth transport; no additional /api/v1 auth URLs.
 // These return only safe state, never a session, Auth user object or password.
-export async function signup(input: unknown) {
+export async function signup(input: unknown, next?: string) {
   await sameOrigin();
   const value = signupInput.safeParse(input);
   if (!value.success) return { error: 'Check your name, email and password.' };
   const client = await createClient();
+  const callback = new URL('/auth/callback', publicEnvironment().siteUrl);
+  if (next) callback.searchParams.set('next', safeNext(next));
   const { data, error } = await client.auth.signUp({ email: value.data.email, password: value.data.password,
-    options: { data: { full_name: value.data.fullName }, emailRedirectTo: new URL('/auth/callback', publicEnvironment().siteUrl).toString() } });
+    options: { data: { full_name: value.data.fullName }, emailRedirectTo: callback.toString() } });
   if (error || (data.user?.identities && data.user.identities.length === 0))
     return { error: 'Unable to create an account. If this email is registered, sign in.' };
   if (data.session) await syncProfile(client);
