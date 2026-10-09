@@ -2,8 +2,8 @@
 
 BayFlow is a multi-tenant auto repair workflow platform for customers, garage owners, service advisors, technicians, parts staff, and QC inspectors.
 
-**Phase B01: database foundation.** PostgreSQL schema, RLS, local fixtures and
-generated database types are implemented. Application pages, APIs and workflows
+**Phase B02: Cloud security verification complete.** PostgreSQL schema, RLS,
+generated database types and real Auth/REST isolation tests are implemented. Application pages, APIs and workflows
 have not been built. B00 remains unimplemented; B01 was explicitly requested next.
 
 ## What problem it solves
@@ -40,7 +40,7 @@ npm run typecheck
 ```
 
 `db:reset` starts a disposable native PostgreSQL 17 instance, runs the official
-Supabase CLI reset/migrations/seed, checks constraints and RLS, generates types,
+Supabase CLI reset/migrations/seed, checks constraints and RLS, preserves types,
 checks migration reapplication, and shuts the instance down. Its database URL is
 always generated locally; it cannot reset a Cloud database. No Docker is needed.
 
@@ -58,11 +58,12 @@ same-tenant FKs, indexes, constraints, safe triggers, six private read helpers,
 
 See [backend database guide](backend/docs/database-foundation.md) for the ERD,
 Cloud linking/review/push commands, RLS decisions, and full fixture account list.
-No Cloud project has been linked or migrated. Never reset Cloud or include the
-local seed in a Cloud push. Cloud application requires an explicit reviewed step.
+Cloud project `tlqvlsrmxueuuzxyltej` is linked with all three migrations applied.
+Never reset Cloud or include the local seed in a Cloud push. Future migrations
+require review before application.
 
 Supabase CLI generated [database types](frontend/src/lib/supabase/database.types.ts)
-from the applied native PostgreSQL schema. After Cloud application, run
+from the linked Cloud schema. Run
 `npm run db:types` from `backend/` to regenerate from the linked project.
 
 ## Development / lint / typecheck / test / build
@@ -73,6 +74,12 @@ database. `npm run db:lint` targets a linked Cloud database after reviewed schem
 application. Verification evidence is recorded in
 [backend verification](backend/docs/verification.md).
 
+B02 adds `npm run db:test:cloud`. Set `BAYFLOW_TEST_PROJECT_REF` to the linked
+development/test project first. It creates dedicated Auth identities and tenant
+fixtures; use the [B02 audit guide](backend/docs/b02-security-verification.md)
+for exact commands, security results and cleanup behavior. All 81 Cloud tests
+and 57 native tests pass. No Docker or additional dependencies are needed.
+
 Next.js dev/build/lint/E2E commands will be added in their authorized phases.
 
 ## Demo credentials
@@ -82,8 +89,9 @@ The B01 work order explicitly includes local seed users. All addresses use
 Handles: `owner.a`, `owner.b`, `customer.a`, `customer.b`, and
 `advisor.a`/`technician.a`/`parts.a`/`qc.a` (also `.b` and `.c` for other shops).
 Owner A owns Lahore Auto Care and Northside Garage; owner B owns City Motors.
-These are native test fixtures, not provisioned Cloud accounts. Real Auth sign-in
-has not been tested. No workflow records are seeded in B01.
+These are native test fixtures, not provisioned Cloud accounts. Separate B02
+Cloud identities use random per-run passwords and are not demo logins.
+No workflow records are seeded in B01.
 
 ## Live Vercel deployment and Supabase configuration
 
@@ -108,11 +116,12 @@ Security contracts remain in [docs/01-schema-and-rls.md](docs/01-schema-and-rls.
 
 ## Known limitations and optional features
 
-B01 verifies PostgreSQL behavior using minimal platform Auth/role fixtures, not
-running Supabase Auth/PostgREST services. Cloud sign-in, REST smoke tests and
-database lint require a disposable Cloud project. The Next.js scaffold and
-credentials are still absent. Workflow RPCs, idempotency and transition guards
-belong to later phases. B02 and all later phases remain unstarted.
+B01 verifies PostgreSQL behavior using minimal platform Auth/role fixtures.
+B02 additionally verifies real Cloud sign-in, REST authorization and SQL lint.
+Test identities and immutable audit fixtures remain in Cloud; test shops are
+hidden and test staff deactivated after the run. The Next.js scaffold is still
+absent. Workflow RPCs, idempotency and transition guards belong to later phases.
+B03 and all later phases remain unstarted.
 
 ```text
 frontend/
@@ -121,8 +130,8 @@ frontend/
   public/
   e2e/
 backend/
-  supabase/{config.toml,seed.sql,migrations/}
-  docs/{database-foundation.md,verification.md}
+  supabase/{config.toml,seed.sql,migrations/,tests/}
+  docs/{database-foundation.md,verification.md,b02-security-verification.md}
   scripts/{generate-types.mjs,verify-postgres.mjs}
   tests/{helpers.mjs,foundation.test.mjs,tenant-context.test.mjs}
   package.json

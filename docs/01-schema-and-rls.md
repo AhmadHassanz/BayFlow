@@ -3,7 +3,9 @@
 The B01 work order implements this contract in `backend/supabase/migrations/`.
 See [database foundation](../backend/docs/database-foundation.md) for the ERD,
 grants, seed identities, and exact CLI commands. The user explicitly included
-foundation RLS and seed data in B01; B02 remains a separate verification phase.
+foundation RLS and seed data in B01. B02 verified these policies through real
+Cloud Auth/REST without requiring schema changes; see the
+[B02 security audit](../backend/docs/b02-security-verification.md).
 
 ## Global Rules
 

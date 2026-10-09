@@ -1,5 +1,10 @@
 # B01 Verification Evidence
 
+Historical B01 evidence follows. The user subsequently applied the migrations
+to Cloud and regenerated types. B02 now passes real Auth/REST checks and Cloud
+lint; see [current B02 evidence](b02-security-verification.md). Native verification
+now preserves Cloud types unless `--generate-types` is explicitly requested.
+
 Verified on 2026-10-09 using Windows, Node.js 24.15.0, Supabase CLI 2.120.0,
 and disposable native PostgreSQL 17.10. Docker is neither installed nor required
 for this verification. No Cloud project was linked or modified.

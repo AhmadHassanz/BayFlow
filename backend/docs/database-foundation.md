@@ -22,7 +22,7 @@ npm run typecheck
 
 `db:reset` creates a fresh native PostgreSQL 17 cluster on loopback, runs the
 official `supabase db reset --db-url <temporary-loopback-url> --yes`, runs the
-tests, generates types, verifies the second migration application is a no-op,
+tests, preserves existing types, verifies the second migration application is a no-op,
 and shuts down/removes the cluster. `db:verify:postgres` is an alias for the same
 verification. The URL is generated inside the script and cannot be replaced by
 an environment variable or argument. It applies ordered migrations and
@@ -47,7 +47,10 @@ npx --no-install supabase db push
 
 Do not include the seed in Cloud pushes. Use Auth Admin tooling for a separately
 authorized disposable Cloud demo in B11. No Cloud project was linked or changed
-by B01. Keep passwords, access tokens and database URLs out of Git and chat.
+by the original B01 implementation. The user subsequently linked Cloud project
+`tlqvlsrmxueuuzxyltej` and applied all three migrations. B02 verified real
+Auth/REST using separate security fixtures, not the local seed or B11 demo.
+Keep passwords, access tokens and database URLs out of Git and chat.
 
 After reviewed Cloud migration application, `npm run db:lint` lints the linked
 database and `npm run db:types` regenerates types from the linked project.
@@ -206,10 +209,19 @@ cannot truncate previously generated types. The generated artifact belongs to
 `npm run db:reset` provides local database verification without Docker. It starts
 bundled PostgreSQL 17 on loopback port 55432, creates minimal Auth schema/role
 fixtures, applies the actual migrations and seed using the official CLI reset,
-runs SQL tests, generates types with `supabase gen types --db-url`, and
+runs SQL tests, preserves Cloud-generated types, and
 checks that a second migration application is a no-op. It stops the process and
 removes the disposable cluster afterward. It never contacts Cloud and is not a
 substitute for Supabase Auth/PostgREST integration.
+
+For explicit local type regeneration only, run
+`node scripts/verify-postgres.mjs --generate-types`; this invokes official
+`supabase gen types --db-url` and replaces the generated artifact. Prefer
+`npm run db:types` for the linked Cloud schema.
+
+B02 has now passed real Cloud Auth/PostgREST verification and Cloud lint; see
+[B02 evidence and rerun guide](b02-security-verification.md). No additional
+migration was required. The review notes below record the original B01 handoff.
 
 Before B02, review migration SQL, intended public view grants, customer estimate
 visibility, staff profile access, PostgreSQL major version against Cloud, and the

@@ -32,8 +32,8 @@ This ledger tracks phase status, verification, migration IDs, and open issues. U
 | --- | --- | --- | --- | --- | --- |
 | S00 | PASSED | HEAD after S00 commit, 2026-10-09 Asia/Karachi | N/A | Created `AGENTS.md`, docs/00-05, README outline, repo skeleton; verified no app/package/API code exists | None |
 | B00 | NOT_STARTED | N/A | N/A | N/A | Requires explicit user instruction |
-| B01 | PASSED | HEAD at B01 checkpoint, 2026-10-09 Asia/Karachi | 20261009090000, 20261009090100, 20261009090200; local only | Official CLI reset + seed; 57 SQL/RLS tests pass; CLI types; typecheck; no-op second migration application; see backend/docs/verification.md | Cloud application/Auth/REST/lint not run; B00 still absent; Docker declined by user |
-| B02 | NOT_STARTED | N/A | N/A | N/A | Requires B01 |
+| B01 | PASSED | 8fd5f93, 2026-10-09 Asia/Karachi | 20261009090000, 20261009090100, 20261009090200; local and Cloud applied | Official CLI reset + seed; 57 SQL/RLS tests pass; Cloud CLI types and lint; typecheck; no-op second migration application | B00 still absent; Docker declined by user |
+| B02 | PASSED | HEAD at B02 checkpoint, 2026-10-09 Asia/Karachi | No new migration; three Cloud versions verified | 81 real Cloud Auth/REST tests; 57 native tests; Cloud lint and typecheck exit 0; see backend/docs/b02-security-verification.md | Dedicated Cloud fixture records retained; B00 remains absent; future workflows untested |
 | B03 | NOT_STARTED | N/A | N/A | N/A | Requires B02 |
 | B04 | NOT_STARTED | N/A | N/A | N/A | Requires B03 |
 | B05 | NOT_STARTED | N/A | N/A | N/A | Requires B04 |

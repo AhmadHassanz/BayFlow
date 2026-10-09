@@ -72,9 +72,11 @@ try {
   await run('--test', ['tests/*.test.mjs'], {
     BAYFLOW_TEST_DB_URL: databaseUrl,
   });
-  await run(fileURLToPath(new URL('./generate-types.mjs', import.meta.url)), [], {
-    BAYFLOW_TYPEGEN_DB_URL: databaseUrl,
-  });
+  if (process.argv.includes('--generate-types')) {
+    await run(fileURLToPath(new URL('./generate-types.mjs', import.meta.url)), [], {
+      BAYFLOW_TYPEGEN_DB_URL: databaseUrl,
+    });
+  }
   // Migration history must make a second application a no-op.
   await run(cli, ['migration', 'up', '--db-url', databaseUrl]);
   console.log('PostgreSQL verification complete. Supabase Auth/REST checks require a separate Cloud test project.');
