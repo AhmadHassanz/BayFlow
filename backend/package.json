@@ -21,7 +21,8 @@
     "db:test:cloud:b07": "node --test --test-concurrency=1 supabase/tests/cloud-estimates.test.mjs",
     "db:test:cloud:b08": "node --test --test-concurrency=1 supabase/tests/cloud-parts.test.mjs",
     "db:test:cloud:b09": "node --test --test-concurrency=1 supabase/tests/cloud-repair-qc.test.mjs",
-    "db:test:cloud:b10": "node --test --test-concurrency=1 supabase/tests/cloud-notifications.test.mjs"
+    "db:test:cloud:b10": "node --test --test-concurrency=1 supabase/tests/cloud-notifications.test.mjs",
+    "db:demo:cloud": "node scripts/provision-cloud-demo.mjs"
   },
   "devDependencies": {
     "embedded-postgres": "17.10.0-beta.17",

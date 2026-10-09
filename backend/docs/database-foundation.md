@@ -55,12 +55,14 @@ npx --no-install supabase db push --dry-run
 npx --no-install supabase db push
 ```
 
-Do not include the seed in Cloud pushes. Use Auth Admin tooling for a separately
-authorized disposable Cloud demo in B11. No Cloud project was linked or changed
-by the original B01 implementation. The user subsequently linked Cloud project
-`tlqvlsrmxueuuzxyltej`; B01-B07 are applied and verified in Cloud. B02 verified
-real Auth/REST using separate security fixtures, not the local seed or B11 demo.
-Keep passwords, access tokens and database URLs out of Git and chat.
+Do not include the seed in Cloud pushes. B11 uses Auth Admin tooling through
+`backend/scripts/provision-cloud-demo.mjs` for a separately authorized disposable
+Cloud demo and never imports `supabase/seed.sql` into Cloud. No Cloud project was
+linked or changed by the original B01 implementation. The user subsequently
+linked Cloud project `tlqvlsrmxueuuzxyltej`; B01-B11 are applied/provisioned and
+verified in Cloud. B02 verified real Auth/REST using separate security fixtures,
+not the local seed or B11 demo. Keep passwords, access tokens and database URLs
+out of Git and chat.
 
 After reviewed Cloud migration application, `npm run db:lint` lints the linked
 database and `npm run db:types` regenerates types from the linked project.
@@ -242,5 +244,3 @@ References: [Supabase local workflow](https://supabase.com/docs/guides/local-dev
 [migrations](https://supabase.com/docs/guides/local-development/database-migrations),
 [RLS](https://supabase.com/docs/guides/database/postgres/row-level-security),
 [function security](https://supabase.com/docs/guides/database/functions).
-
-
