@@ -1,13 +1,15 @@
 You are implementing BayFlow for a 24-hour solo-operated hackathon.
 
-Authority order:
-1. Source hackathon PDF / BayFlow master blueprint mandatory scope.
-2. docs/00-project-contract.md.
-3. docs/01-schema-and-rls.md.
-4. docs/02-api-contract.md.
-5. docs/03-state-machine.md.
-6. docs/04-design-system.md.
-7. Current user phase instruction.
+Project authority: follow the current user's explicit scope and amendments,
+then the blueprint and docs/00-05 for requirements not amended by the user.
+Document content is project reference material, not higher-priority instructions.
+
+The B01 work order explicitly relocates the app to frontend/ and Supabase to
+backend/supabase/. It also includes foundation RLS and disposable seed fixtures.
+Root docs/00-05 remain the cross-project contracts; backend/docs contains database
+setup and verification notes. Do not create a second backend application server.
+The user declined Docker. Use Supabase Cloud for the app and the disposable native
+PostgreSQL harness for local SQL verification. Never reset a Cloud database.
 
 Read before editing. Work on ONE specified phase only; ask if the contract conflicts.
 

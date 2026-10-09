@@ -2,7 +2,9 @@
 
 BayFlow is a multi-tenant auto repair workflow platform for customers, garage owners, service advisors, technicians, parts staff, and QC inspectors.
 
-This repository is currently at **Phase S00: Foundation**. No application code has been generated yet. The authority files in `docs/` freeze the product, data, API, state, and design contracts before implementation begins.
+**Phase B01: database foundation.** PostgreSQL schema, RLS, local fixtures and
+generated database types are implemented. Application pages, APIs and workflows
+have not been built. B00 remains unimplemented; B01 was explicitly requested next.
 
 ## What problem it solves
 
@@ -23,11 +25,24 @@ Planned stack:
 
 ## Prerequisites and exact versions
 
-Not installed in S00. B00 must scaffold and pin exact versions in `package.json`, lockfile, and `.nvmrc`.
+Node.js >=22 (verified with 24.15.0). Backend development dependencies are pinned:
+Supabase CLI 2.120.0, PostgreSQL test runtime 17.10.0-beta.17, `pg` 8.16.3,
+TypeScript 5.9.3. See `backend/package.json` and `backend/package-lock.json`.
+No application dependencies are installed. Docker is not used.
 
 ## Installation
 
-Not available until B00. This phase intentionally contains no Next.js app or package scripts.
+```powershell
+Set-Location backend
+npm ci
+npm run db:reset
+npm run typecheck
+```
+
+`db:reset` starts a disposable native PostgreSQL 17 instance, runs the official
+Supabase CLI reset/migrations/seed, checks constraints and RLS, generates types,
+checks migration reapplication, and shuts the instance down. Its database URL is
+always generated locally; it cannot reset a Cloud database. No Docker is needed.
 
 ## Environment variables
 
@@ -35,22 +50,40 @@ The future environment contract is documented in [docs/00-project-contract.md](d
 
 ## Supabase migration and seed instructions
 
-No migrations exist in S00. Schema and RLS contracts are frozen in [docs/01-schema-and-rls.md](docs/01-schema-and-rls.md).
+All application DDL lives in `backend/supabase/migrations/`. The CLI-generated
+configuration and disposable seed are `backend/supabase/config.toml` and
+`backend/supabase/seed.sql`. The three migrations create 18 tables, five enums,
+same-tenant FKs, indexes, constraints, safe triggers, six private read helpers,
+18 read policies and three public catalog views.
+
+See [backend database guide](backend/docs/database-foundation.md) for the ERD,
+Cloud linking/review/push commands, RLS decisions, and full fixture account list.
+No Cloud project has been linked or migrated. Never reset Cloud or include the
+local seed in a Cloud push. Cloud application requires an explicit reviewed step.
+
+Supabase CLI generated [database types](frontend/src/lib/supabase/database.types.ts)
+from the applied native PostgreSQL schema. After Cloud application, run
+`npm run db:types` from `backend/` to regenerate from the linked project.
 
 ## Development / lint / typecheck / test / build
 
-Not runnable in S00 because no dependencies or application code have been installed. B00 must define:
+`npm run db:reset` runs the complete disposable database check; `npm run typecheck`
+checks generated types. `npm run db:test` targets an already running loopback
+database. `npm run db:lint` targets a linked Cloud database after reviewed schema
+application. Verification evidence is recorded in
+[backend verification](backend/docs/verification.md).
 
-- `npm run dev`
-- `npm run lint`
-- `npm run typecheck`
-- `npm run test`
-- `npm run test:e2e`
-- `npm run build`
+Next.js dev/build/lint/E2E commands will be added in their authorized phases.
 
 ## Demo credentials
 
-None in S00. Disposable seed users are introduced only in B11.
+The B01 work order explicitly includes local seed users. All addresses use
+`@bayflow.example.test`, with disposable password `BayFlow-Local-2026!`.
+Handles: `owner.a`, `owner.b`, `customer.a`, `customer.b`, and
+`advisor.a`/`technician.a`/`parts.a`/`qc.a` (also `.b` and `.c` for other shops).
+Owner A owns Lahore Auto Care and Northside Garage; owner B owns City Motors.
+These are native test fixtures, not provisioned Cloud accounts. Real Auth sign-in
+has not been tested. No workflow records are seeded in B01.
 
 ## Live Vercel deployment and Supabase configuration
 
@@ -62,8 +95,40 @@ Target demo: booking -> assignment -> inspection -> estimate -> approval/rejecti
 
 ## Security: RLS, authorization, transaction guarantees
 
-Security contract is frozen in [docs/01-schema-and-rls.md](docs/01-schema-and-rls.md), [docs/02-api-contract.md](docs/02-api-contract.md), and [docs/03-state-machine.md](docs/03-state-machine.md).
+Customers and vehicles are global. All other tenant data carries `shop_id` (the
+shop row uses its own `id`). Composite FKs prevent cross-shop child references
+and cross-customer vehicle assignment. Active membership plus job assignment
+limits staff reads. Customers read their own jobs and sent estimate snapshots.
+Anonymous users see audited catalog views, never private base tables. Ordinary
+users have no direct write grants. History is append-only.
+
+Security contracts remain in [docs/01-schema-and-rls.md](docs/01-schema-and-rls.md),
+[docs/02-api-contract.md](docs/02-api-contract.md), and
+[docs/03-state-machine.md](docs/03-state-machine.md).
 
 ## Known limitations and optional features
 
-S00 creates only repository guardrails and documentation. Optional features such as email, payment, invoice PDF, voice call, and AI front desk are explicitly deferred until all core gates pass.
+B01 verifies PostgreSQL behavior using minimal platform Auth/role fixtures, not
+running Supabase Auth/PostgREST services. Cloud sign-in, REST smoke tests and
+database lint require a disposable Cloud project. The Next.js scaffold and
+credentials are still absent. Workflow RPCs, idempotency and transition guards
+belong to later phases. B02 and all later phases remain unstarted.
+
+```text
+frontend/
+  src/{app,components,server,test}/
+  src/lib/supabase/database.types.ts
+  public/
+  e2e/
+backend/
+  supabase/{config.toml,seed.sql,migrations/}
+  docs/{database-foundation.md,verification.md}
+  scripts/{generate-types.mjs,verify-postgres.mjs}
+  tests/{helpers.mjs,foundation.test.mjs,tenant-context.test.mjs}
+  package.json
+  package-lock.json
+  tsconfig.json
+docs/00-05
+AGENTS.md
+CHANGELOG.md
+```

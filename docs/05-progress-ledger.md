@@ -32,7 +32,7 @@ This ledger tracks phase status, verification, migration IDs, and open issues. U
 | --- | --- | --- | --- | --- | --- |
 | S00 | PASSED | HEAD after S00 commit, 2026-10-09 Asia/Karachi | N/A | Created `AGENTS.md`, docs/00-05, README outline, repo skeleton; verified no app/package/API code exists | None |
 | B00 | NOT_STARTED | N/A | N/A | N/A | Requires explicit user instruction |
-| B01 | NOT_STARTED | N/A | N/A | N/A | Requires B00 |
+| B01 | PASSED | HEAD at B01 checkpoint, 2026-10-09 Asia/Karachi | 20261009090000, 20261009090100, 20261009090200; local only | Official CLI reset + seed; 57 SQL/RLS tests pass; CLI types; typecheck; no-op second migration application; see backend/docs/verification.md | Cloud application/Auth/REST/lint not run; B00 still absent; Docker declined by user |
 | B02 | NOT_STARTED | N/A | N/A | N/A | Requires B01 |
 | B03 | NOT_STARTED | N/A | N/A | N/A | Requires B02 |
 | B04 | NOT_STARTED | N/A | N/A | N/A | Requires B03 |

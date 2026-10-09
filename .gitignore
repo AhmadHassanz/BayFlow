@@ -27,3 +27,6 @@ Thumbs.db
 
 # Local Supabase artifacts
 .supabase/
+backend/supabase/.temp/
+backend/supabase/.branches/
+backend/.test-data/

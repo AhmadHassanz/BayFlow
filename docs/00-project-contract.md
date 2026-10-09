@@ -92,17 +92,23 @@ The browser must not submit authoritative shop role, user ID, tenant ownership, 
 ## Planned Repository Shape
 
 ```text
-src/
-  app/
-  components/{ui,layout,booking,inventory,qc,shared}/
-  lib/{supabase,auth,contracts,api,format,constants}/
-  server/{repositories,services,permissions}/
-  test/
-supabase/{migrations,seed.sql,tests}/
-e2e/
+frontend/
+  src/{app,components,lib,server,test}/
+  public/
+  e2e/
+backend/
+  supabase/{migrations,seed.sql,config.toml}/
+  docs/
+  scripts/
+  tests/
 docs/
-public/
 ```
+
+The user amended the layout in the B01 work order. `backend/` holds database
+tooling, not a separate HTTP server. Future Route Handlers still belong to the
+single Next.js app. The same work order explicitly includes foundation RLS,
+read authorization helpers, and local seed identities in B01. B00 remains
+unimplemented; B01 database work does not imply a completed application scaffold.
 
 ## Environment Contract
 

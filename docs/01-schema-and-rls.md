@@ -1,6 +1,9 @@
 # Schema and RLS Contract
 
-No migrations are implemented in S00. This document freezes the database contract for B01/B02.
+The B01 work order implements this contract in `backend/supabase/migrations/`.
+See [database foundation](../backend/docs/database-foundation.md) for the ERD,
+grants, seed identities, and exact CLI commands. The user explicitly included
+foundation RLS and seed data in B01; B02 remains a separate verification phase.
 
 ## Global Rules
 
@@ -74,5 +77,15 @@ No migrations are implemented in S00. This document freezes the database contrac
 
 ## Open Questions
 
-- Exact enum names and function signatures will be implemented in B01/B06 but must preserve this contract.
-- Supabase generated types cannot exist until a schema is applied.
+- Enums are `shop_role`, `booking_status`, `estimate_state`, `estimate_item_kind`,
+  and `purchase_order_status`; Customer is global identity, not a shop role.
+- Generated types live in `frontend/src/lib/supabase/database.types.ts` and are
+  emitted by the Supabase CLI from applied PostgreSQL schema.
+- Active membership/role validation on transitions, idempotency receipts, locking,
+  sent-estimate immutability and exactly-once release remain future RPC work.
+- `estimate_items` and `purchase_order_items` include `shop_id` to support composite
+  FKs and tenant policies; `booking_services` has its own UUID primary key.
+- Safe public views deliberately bypass base-table RLS via audited projections;
+  anonymous users have no base-table grants. Draft estimates are staff-only.
+- All ordinary client writes are denied in B01, including profile edits and
+  notification read markers. Later phases must add narrowly reviewed operations.
