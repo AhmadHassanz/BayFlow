@@ -1,5 +1,18 @@
 # Changelog
 
+## B06 - 2026-10-09 (local verification; manual Cloud gate pending)
+
+- Added guarded booking action RPCs and Route Handlers for detail/list reads and
+  `CONFIRM_BOOKING`, `ASSIGN_TECHNICIAN`, `START_INSPECTION`, `CANCEL_BOOKING`.
+- Added actor/key action receipts, expected-version checks, atomic history and
+  B06 notifications while preserving direct table write denial.
+- Added customer, shop and booking detail APIs plus strict action contracts and
+  safe 400/403/404/409/422 error mapping.
+- Local verification passed 110 native tests, 122 frontend tests and 20 production
+  HTTP smoke checks; frontend lint/build and both typechecks exited 0.
+- Added guarded `db:test:cloud:b06`; no B06 Cloud migration, lint or Cloud test
+  command was executed by the agent.
+
 ## B05 - 2026-10-09
 
 - Added POST /api/v1/bookings using verified cookie identity and one user-scoped

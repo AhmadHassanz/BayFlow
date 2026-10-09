@@ -165,3 +165,25 @@ then the receipt. A same-key/same-payload retry returns the current owning
 booking state before schedule/capacity checks; a changed payload conflicts.
 See [B05 evidence](../backend/docs/b05-booking-verification.md). Cloud application
 and acceptance passed; no B06 transitions are added.
+
+## B06 Booking State Engine
+
+Migration `20261009151303_b06_booking_state_engine.sql` adds guarded booking
+action/read RPCs and one private `booking_action_receipts` table. Public tables,
+status names and direct table write denial remain unchanged. Action receipts are
+scoped by actor/idempotency key and store canonical action payload plus the
+resulting booking version; ordinary users have no table privileges.
+
+`public.apply_booking_action(input jsonb)` accepts only named B06 actions:
+`CONFIRM_BOOKING`, `ASSIGN_TECHNICIAN`, `START_INSPECTION` and `CANCEL_BOOKING`.
+The private implementation locks the verified Auth identity and target booking,
+checks current state, expected version, actor role or assignment, and then writes
+status, version, history, notifications and receipt atomically. No generic
+`setStatus` operation exists.
+
+`public.get_booking`, `public.list_my_bookings` and `public.list_shop_bookings`
+return guarded projections for authorized customers and shop roles. Customers see
+their own jobs; OWNER/SA see shop jobs; technicians see assigned jobs. Unassigned
+or inactive staff receive hidden/not-found behavior. See
+[B06 evidence](../backend/docs/b06-actions-verification.md). Cloud application
+and acceptance are operator-run and pending; no B07 estimate flow is added.

@@ -39,6 +39,11 @@ try {
     [`/api/v1/shops/${shop}/slots?date=2026-02-29`, 'GET', 400, origin],
     ['/api/v1/bookings', 'POST', 401, origin],
     ['/api/v1/bookings', 'POST', 403, 'https://attacker.test'],
+    ['/api/v1/me/bookings', 'GET', 401, origin],
+    [`/api/v1/bookings/${shop}`, 'GET', 401, origin],
+    [`/api/v1/shops/${shop}/bookings`, 'GET', 401, origin],
+    [`/api/v1/bookings/${shop}/actions`, 'POST', 401, origin],
+    [`/api/v1/bookings/${shop}/actions`, 'POST', 403, 'https://attacker.test'],
   ]) {
     const response = await request(path, method, requestOrigin);
     assert.equal(response.status, expected, `${method} ${path}`);
@@ -46,5 +51,5 @@ try {
     assert.equal((await response.json()).data, null);
     console.log(`${method} ${path}: ${expected}, no-store, safe error envelope`);
   }
-  console.log('B03/B04/B05 production HTTP smoke: 15/15 passed (no credentials or Cloud writes).');
+  console.log('B03/B04/B05/B06 production HTTP smoke: 20/20 passed (no credentials or Cloud writes).');
 } finally { child.kill(); }

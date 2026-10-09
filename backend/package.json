@@ -16,6 +16,7 @@
     "db:test:cloud:b03": "node --test --test-concurrency=1 supabase/tests/cloud-auth.test.mjs",
     "db:test:cloud:b04": "node --test --test-concurrency=1 supabase/tests/cloud-catalog.test.mjs",
     "db:test:cloud:b05": "node --test --test-concurrency=1 supabase/tests/cloud-bookings.test.mjs",
+    "db:test:cloud:b06": "node --test --test-concurrency=1 supabase/tests/cloud-actions.test.mjs",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

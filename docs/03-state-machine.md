@@ -105,3 +105,16 @@ idempotency receipt in the same transaction. Same-key retries return the current
 owning booking without another creation event or version increment. The shop is
 locked before the slot so owner schedule saves and bookings serialize consistently.
 No confirm, cancel, assign or other B06 action endpoint is implemented by B05.
+
+## B06 Implemented Boundary
+
+B06 implements the first shared action mechanism for `CONFIRM_BOOKING`,
+`ASSIGN_TECHNICIAN`, `START_INSPECTION` and `CANCEL_BOOKING`. Each action checks
+the current state, expected version, actor role or technician assignment, writes
+history, increments `state_version` and records an actor-scoped idempotency
+receipt in the same transaction. It also adds role-scoped booking list/detail
+reads needed by the later shop dashboards.
+
+B06 stops before estimate creation and later lifecycle actions. `INSPECTING ->
+ESTIMATE_REVIEW`, customer estimate decisions, parts, repair, QC and pickup
+remain later phases.

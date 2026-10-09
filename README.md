@@ -2,10 +2,11 @@
 
 BayFlow is a multi-tenant auto repair workflow platform for customers, garage owners, service advisors, technicians, parts staff, and QC inspectors.
 
-**Phase B05: Cloud verified; B06 not started.**
-B01-B05 are verified in Cloud. B05 adds atomic customer booking creation with
-capacity locks, own-vehicle validation, history, SA notices and retry receipts.
-UI and B06 transitions remain outside this phase. See
+**Phase B06: implemented locally; manual Cloud application and acceptance pending.**
+B01-B05 are verified in Cloud. B06 adds the staff/customer booking action engine
+for confirmation, technician assignment, inspection start, cancellation and
+role-scoped booking reads. UI and B07 estimate work remain outside this phase. See
+[B06 evidence and manual commands](backend/docs/b06-actions-verification.md),
 [B05 evidence](backend/docs/b05-booking-verification.md),
 [B04 evidence](backend/docs/b04-catalog-verification.md) and
 [B03 evidence](backend/docs/b03-auth-verification.md).
@@ -69,13 +70,13 @@ callback URL in Cloud; never expose an Admin key through `NEXT_PUBLIC_*`.
 
 All application DDL lives in `backend/supabase/migrations/`. The CLI-generated
 configuration and disposable seed are `backend/supabase/config.toml` and
-`backend/supabase/seed.sql`. The three migrations create 18 tables, five enums,
-same-tenant FKs, indexes, constraints, safe triggers, six private read helpers,
-18 read policies and three public catalog views.
+`backend/supabase/seed.sql`. The B01 foundation migrations create 18 tables,
+five enums, same-tenant FKs, indexes, constraints, safe triggers, six private
+read helpers, 18 read policies and three public catalog views.
 
 See [backend database guide](backend/docs/database-foundation.md) for the ERD,
 Cloud linking/review/push commands, RLS decisions, and full fixture account list.
-Cloud project `tlqvlsrmxueuuzxyltej` is linked with all three migrations applied.
+Cloud project `tlqvlsrmxueuuzxyltej` is linked with B01-B05 migrations applied.
 Never reset Cloud or include the local seed in a Cloud push. Future migrations
 require review before application.
 The additional B03 migration `20261009100642_b03_auth_and_team.sql` is applied
@@ -87,6 +88,9 @@ B05 migration `20261009140203_b05_transactional_booking.sql` is applied in Cloud
 after user-run review/dry-run/push. Cloud lint, 9/9 booking acceptance and 81/81
 RLS regression tests passed. It adds one private receipt table and the narrow
 booking RPC; all 18 public tables retain their existing RLS/write-denial boundaries.
+B06 migration `20261009151303_b06_booking_state_engine.sql` is verified locally
+only and has **not** been pushed to Cloud. It adds one private action receipt
+table, guarded booking action/read RPCs and no direct public table writes.
 
 Supabase CLI generated [database types](frontend/src/lib/supabase/database.types.ts)
 from the linked Cloud schema. Run
@@ -122,6 +126,9 @@ saves refresh the next 14 local calendar days; no background scheduler is added.
 B05 adds `npm run db:test:cloud:b05`, guarded on its exact migration version.
 It exercises real HTTP booking/retry/capacity/ownership behavior against the
 linked Cloud project. Build frontend first and run all Cloud suites sequentially.
+B06 adds `npm run db:test:cloud:b06`, guarded on its exact migration version.
+It exercises real HTTP confirm, assign, start-inspection, cancellation and
+role-scoped read behavior after manual Cloud application.
 
 ## Demo credentials
 
@@ -162,8 +169,9 @@ B02 additionally verifies real Cloud sign-in, REST authorization and SQL lint.
 Test identities and immutable audit fixtures remain in Cloud; test shops are
 hidden and test staff deactivated after the run. Distributed Auth/staff
 provisioning failures can require operator recovery; see the B03 guide. Workflow
-transitions, non-booking idempotency and remaining workflow RPCs belong to later
-phases. B04 and B05 Cloud acceptance passed; Vercel/browser integration remains a separate gate.
+non-booking idempotency beyond B06 and remaining workflow RPCs belong to later
+phases. B04 and B05 Cloud acceptance passed; B06 Cloud acceptance is pending.
+Vercel/browser integration remains a separate gate.
 Referenced cancelled appointments can keep a changed slot start unavailable;
 the B04 guide records schedule preservation and horizon-refresh behavior.
 Booking receipts retain canonical private payloads without automatic expiration;

@@ -305,3 +305,29 @@ booking, service relations, history, active-SA notices and receipt. No separate
 reservation count or intermediate booking status is introduced. B06 read lists,
 detail/actions and UI remain unimplemented. The B05 Cloud migration/test gate
 passed after user-run application.
+
+## B06 Booking Actions and Reads
+
+B06 implements `GET /api/v1/me/bookings`, `GET /api/v1/shops/[id]/bookings`,
+`GET /api/v1/bookings/[id]` and `POST /api/v1/bookings/[id]/actions`.
+Read responses are private/no-store and return only authorized booking DTOs with
+camelCase fields. Shop booking list accepts only `status`, `assignee=all|mine|unassigned`
+and `page`; it returns `{ items, page, pageSize: 50 }`.
+
+Action requests follow the frozen action payload pattern. Supported actions are:
+
+- `CONFIRM_BOOKING`: empty payload, `PENDING -> CONFIRMED`, same-shop OWNER/SA.
+- `ASSIGN_TECHNICIAN`: `{ technicianUserId }`, `CONFIRMED -> ASSIGNED`,
+  same-shop OWNER/SA, target must be an active same-shop TECHNICIAN.
+- `START_INSPECTION`: empty payload, `ASSIGNED -> INSPECTING`, assigned
+  technician only.
+- `CANCEL_BOOKING`: `{ reason }`, pre-repair nonterminal states to `CANCELLED`,
+  owning customer or same-shop OWNER/SA.
+
+Every action requires same-origin POST, verified session, expectedVersion and
+idempotencyKey. Successful new actions return 201 with authoritative booking
+detail; replay returns 200. Stale version returns 409 `STATE_CONFLICT`; changed
+idempotency payload returns 409 `IDEMPOTENCY_CONFLICT`; illegal state returns
+422 `ACTION_NOT_ALLOWED`; hidden/foreign resources return 404 and forbidden
+visible actions return 403. B07 estimate submission/review/approval is not
+implemented.
