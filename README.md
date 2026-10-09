@@ -2,9 +2,11 @@
 
 BayFlow is a multi-tenant auto repair workflow platform for customers, garage owners, service advisors, technicians, parts staff, and QC inspectors.
 
-**Phase B02: Cloud security verification complete.** PostgreSQL schema, RLS,
-generated database types and real Auth/REST isolation tests are implemented. Application pages, APIs and workflows
-have not been built. B00 remains unimplemented; B01 was explicitly requested next.
+**Phase B03: implemented and locally verified; Cloud application pending approval.** B01/B02
+database isolation remains in place. B03 adds a minimal runnable Next.js frontend,
+SSR auth, `/me`, and owner-authorized staff/membership APIs. Its new Cloud migration
+requires review and explicit approval before application. Business workflow APIs
+and UI are outside this phase. See [B03 evidence](backend/docs/b03-auth-verification.md).
 
 ## What problem it solves
 
@@ -28,9 +30,19 @@ Planned stack:
 Node.js >=22 (verified with 24.15.0). Backend development dependencies are pinned:
 Supabase CLI 2.120.0, PostgreSQL test runtime 17.10.0-beta.17, `pg` 8.16.3,
 TypeScript 5.9.3. See `backend/package.json` and `backend/package-lock.json`.
-No application dependencies are installed. Docker is not used.
+Application dependencies are pinned in `frontend/package.json` and its lockfile.
+Docker is not used.
 
 ## Installation
+
+For the B03 application runtime:
+
+```powershell
+Set-Location frontend
+npm ci --ignore-scripts
+# Copy ../.env.example to .env.local and configure the linked project's keys.
+npm run dev
+```
 
 ```powershell
 Set-Location backend
@@ -46,7 +58,10 @@ always generated locally; it cannot reset a Cloud database. No Docker is needed.
 
 ## Environment variables
 
-The future environment contract is documented in [docs/00-project-contract.md](docs/00-project-contract.md). `.env.example` is expected in B00/B12 when the app skeleton exists.
+The environment contract is documented in [docs/00-project-contract.md](docs/00-project-contract.md).
+Copy root `.env.example` to `frontend/.env.local`. Set the public Supabase URL/key,
+site origin, and exactly one server-only Admin key. Allowlist the exact auth
+callback URL in Cloud; never expose an Admin key through `NEXT_PUBLIC_*`.
 
 ## Supabase migration and seed instructions
 
@@ -61,6 +76,8 @@ Cloud linking/review/push commands, RLS decisions, and full fixture account list
 Cloud project `tlqvlsrmxueuuzxyltej` is linked with all three migrations applied.
 Never reset Cloud or include the local seed in a Cloud push. Future migrations
 require review before application.
+The additional B03 migration `20261009100642_b03_auth_and_team.sql` has passed
+native verification and Cloud dry-run; Cloud application is pending approval.
 
 Supabase CLI generated [database types](frontend/src/lib/supabase/database.types.ts)
 from the linked Cloud schema. Run
@@ -80,7 +97,11 @@ fixtures; use the [B02 audit guide](backend/docs/b02-security-verification.md)
 for exact commands, security results and cleanup behavior. All 81 Cloud tests
 and 57 native tests pass. No Docker or additional dependencies are needed.
 
-Next.js dev/build/lint/E2E commands will be added in their authorized phases.
+From `frontend/`, B03 provides `npm run dev`, `npm run build`, `npm run start`,
+`npm run lint`, `npm run typecheck`, and `npm run test`. Auth UI belongs to later
+frontend work. After the reviewed B03 migration is applied, run
+`npm run db:test:cloud:b03` from `backend/` to exercise production Next.js against
+real Cloud Auth. Tests obtain keys in memory through the existing CLI login/link.
 
 ## Demo credentials
 
@@ -119,9 +140,10 @@ Security contracts remain in [docs/01-schema-and-rls.md](docs/01-schema-and-rls.
 B01 verifies PostgreSQL behavior using minimal platform Auth/role fixtures.
 B02 additionally verifies real Cloud sign-in, REST authorization and SQL lint.
 Test identities and immutable audit fixtures remain in Cloud; test shops are
-hidden and test staff deactivated after the run. The Next.js scaffold is still
-absent. Workflow RPCs, idempotency and transition guards belong to later phases.
-B03 and all later phases remain unstarted.
+hidden and test staff deactivated after the run. B03's local migration must be
+approved and applied before its new RPCs work in Cloud. Distributed Auth/staff
+provisioning failures can require operator recovery; see the B03 guide. Workflow
+RPCs, idempotency and transition guards belong to later phases. B04 has not started.
 
 ```text
 frontend/
@@ -131,7 +153,7 @@ frontend/
   e2e/
 backend/
   supabase/{config.toml,seed.sql,migrations/,tests/}
-  docs/{database-foundation.md,verification.md,b02-security-verification.md}
+  docs/{database-foundation.md,verification.md,b02-security-verification.md,b03-auth-verification.md}
   scripts/{generate-types.mjs,verify-postgres.mjs}
   tests/{helpers.mjs,foundation.test.mjs,tenant-context.test.mjs}
   package.json

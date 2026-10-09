@@ -133,3 +133,40 @@ Realtime is optional. Polling/refetch on focus is the safe baseline. Notificatio
 
 - Rate limit mechanism is not chosen until B00/B03.
 - Concrete response DTOs will be typed in later backend phases.
+
+## B03 Auth and Team Contract
+
+Implemented surfaces: `GET /api/v1/me`, `POST /api/v1/shops/[id]/team`,
+`PATCH /api/v1/shops/[id]/team/[memberId]`, and `/auth/callback`.
+Signup/login/logout use exported Next.js Server Actions in
+`frontend/src/lib/auth/actions.ts`; no extra auth API URLs or UI are added.
+
+`/me` returns `{ user: { id, email, fullName, phone }, memberships }` inside the
+standard success envelope. Memberships contain `{ id, shopId, userId, role, active }`
+and include only the verified user's active memberships. Auth metadata, passwords,
+tokens and other people's memberships are excluded. Missing/invalid sessions get
+401. Private responses are not cached.
+
+Staff creation accepts exactly `{ email, fullName, role, initialPassword }`.
+Allowed roles are `SA`, `TECHNICIAN`, `PARTS`, `QC`. Passwords are 12-128 characters;
+names are nonblank up to 120 characters. Creation returns 201 and the authoritative
+membership, never a password. The owner supplies and communicates the initial
+password outside the API response. Existing email returns 409 `EMAIL_EXISTS` and
+never resets credentials. Staff cannot create their own membership, and owner A
+cannot manage shop B. Ownership is checked on both server and SQL operation.
+
+Membership patch accepts `{ role?, active? }` with at least one field; it returns
+the committed membership. OWNER membership, user ID and shop ID are immutable
+through this contract. False deactivates only that membership. Missing member
+within an owned shop returns 404; unauthorized actor/shop returns 403.
+
+Both team mutations require a same-origin `Origin` header. Staff creation has a
+best-effort per-process bound of 10 requests/minute per owner (429 `RATE_LIMITED`).
+Cross-service provisioning failures return 500 `STAFF_PROVISIONING_INCOMPLETE`
+when operator recovery may be needed; retained new accounts remain banned until
+membership attachment succeeds and activation is confirmed.
+
+`/auth/callback?code=...&next=...` exchanges a PKCE code, synchronizes the profile,
+and redirects only to a local path, defaulting to `/api/v1/me` while UI is absent.
+Invalid/expired links return 400. Public signup accepts only name/email/password;
+it never establishes a shop role. Shop creation remains B04.

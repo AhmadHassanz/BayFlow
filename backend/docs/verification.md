@@ -1,5 +1,8 @@
 # B01 Verification Evidence
 
+For B03's current auth/team migration, application checks and approval-gated
+Cloud session tests, see [B03 verification](b03-auth-verification.md).
+
 Historical B01 evidence follows. The user subsequently applied the migrations
 to Cloud and regenerated types. B02 now passes real Auth/REST checks and Cloud
 lint; see [current B02 evidence](b02-security-verification.md). Native verification

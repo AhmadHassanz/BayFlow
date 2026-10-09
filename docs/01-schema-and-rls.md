@@ -91,3 +91,19 @@ Cloud Auth/REST without requiring schema changes; see the
   anonymous users have no base-table grants. Draft estimates are staff-only.
 - All ordinary client writes are denied in B01, including profile edits and
   notification read markers. Later phases must add narrowly reviewed operations.
+
+## B03 Narrow Auth/Team Operations
+
+Migration `20261009100642_b03_auth_and_team.sql` adds self-only `sync_profile`,
+owner-only `add_staff_membership`, and owner-only `edit_staff_membership`.
+Public wrappers are SECURITY INVOKER; guarded elevated implementations remain
+private with empty search paths. Authenticated EXECUTE grants cover only the
+wrappers and their guarded implementations; the nested owner authorizer is not
+client-executable. No table privileges or RLS policies change.
+
+Profile name is display-only Auth metadata. Staff attachment requires Admin-only
+markers binding the newly created Auth identity to the verified shop owner and
+exact shop, and refuses existing memberships. Role/activation changes cannot
+alter OWNER records or move membership identity/tenant. Owner rows and memberships
+are locked throughout writes. Cloud application remains approval-gated; see
+[B03 verification](../backend/docs/b03-auth-verification.md) for status and recovery.

@@ -1,5 +1,9 @@
 # B01 Database Foundation
 
+B03 adds narrowly guarded auth/profile/team RPCs without changing B01 read
+policies or direct table write denial. Its forward migration and Cloud approval
+status are recorded in [B03 verification](b03-auth-verification.md).
+
 The full master blueprint was reread before implementation. The current user
 explicitly moved database tooling under `backend/` and included foundation RLS,
 helper functions and seed fixtures in B01. No HTTP server, routes or workflow

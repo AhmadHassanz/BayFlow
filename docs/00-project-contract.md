@@ -127,7 +127,9 @@ No direct DB password, JWT secret, service role key, or admin secret may be expo
 
 - Supabase project URL and publishable key are not available in S00.
 - Whether the final Supabase admin key name will be `SUPABASE_SECRET_KEY` or `SUPABASE_SERVICE_ROLE_KEY` depends on the project.
-- Exact Node/Next/Supabase package versions will be selected and pinned in B00.
+- B03's minimum runtime versions are pinned in `frontend/package.json` and its
+  lockfile; verified Node is 24.15.0. Deployment and auth redirect configuration
+  still require independent verification; no B00 deployment gate is claimed here.
 
 ## Do Not Change Without Explicit Approval
 

@@ -13,6 +13,7 @@
     "db:types": "node scripts/generate-types.mjs",
     "db:verify:postgres": "node scripts/verify-postgres.mjs",
     "db:test:cloud": "node --test --test-concurrency=1 supabase/tests/cloud-rls.test.mjs",
+    "db:test:cloud:b03": "node --test --test-concurrency=1 supabase/tests/cloud-auth.test.mjs",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
