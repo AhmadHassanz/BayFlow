@@ -115,6 +115,14 @@ history, increments `state_version` and records an actor-scoped idempotency
 receipt in the same transaction. It also adds role-scoped booking list/detail
 reads needed by the later shop dashboards.
 
-B06 stops before estimate creation and later lifecycle actions. `INSPECTING ->
-ESTIMATE_REVIEW`, customer estimate decisions, parts, repair, QC and pickup
+B07 implements the estimate portion of the same shared action mechanism.
+Assigned technicians submit `INSPECTING -> ESTIMATE_REVIEW`, OWNER/SA users send
+the reviewed estimate to `AWAITING_CUSTOMER`, and only the owning customer can
+approve or reject it. Rejection preserves the sent version and OWNER/SA revision
+creates `revision_no + 1` back in `ESTIMATE_REVIEW`. Technician approval and
+foreign customer decisions are denied by the RPC. Parts, repair, QC and pickup
 remain later phases.
+
+
+
+

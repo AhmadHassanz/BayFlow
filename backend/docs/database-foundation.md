@@ -1,6 +1,6 @@
 # B01 Database Foundation
 
-B05 adds a private CREATE_BOOKING receipt table and atomic booking RPC without
+B07 extends booking actions with transactional estimate review, customer approval/rejection and immutable revisions. B05 adds a private CREATE_BOOKING receipt table and atomic booking RPC without
 changing the 18 public tables or their RLS policies. Its migration is local-only
 until the operator applies it manually; see [B05 verification](b05-booking-verification.md).
 
@@ -58,7 +58,7 @@ npx --no-install supabase db push
 Do not include the seed in Cloud pushes. Use Auth Admin tooling for a separately
 authorized disposable Cloud demo in B11. No Cloud project was linked or changed
 by the original B01 implementation. The user subsequently linked Cloud project
-`tlqvlsrmxueuuzxyltej`; B01-B06 are applied and verified in Cloud. B02 verified
+`tlqvlsrmxueuuzxyltej`; B01-B07 are applied and verified in Cloud. B02 verified
 real Auth/REST using separate security fixtures, not the local seed or B11 demo.
 Keep passwords, access tokens and database URLs out of Git and chat.
 
@@ -242,3 +242,5 @@ References: [Supabase local workflow](https://supabase.com/docs/guides/local-dev
 [migrations](https://supabase.com/docs/guides/local-development/database-migrations),
 [RLS](https://supabase.com/docs/guides/database/postgres/row-level-security),
 [function security](https://supabase.com/docs/guides/database/functions).
+
+

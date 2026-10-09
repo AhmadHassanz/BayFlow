@@ -329,5 +329,28 @@ idempotencyKey. Successful new actions return 201 with authoritative booking
 detail; replay returns 200. Stale version returns 409 `STATE_CONFLICT`; changed
 idempotency payload returns 409 `IDEMPOTENCY_CONFLICT`; illegal state returns
 422 `ACTION_NOT_ALLOWED`; hidden/foreign resources return 404 and forbidden
-visible actions return 403. B07 estimate submission/review/approval is not
-implemented.
+visible actions return 403.
+
+## B07 Estimate Actions
+
+B07 extends the same `POST /api/v1/bookings/[id]/actions` surface and booking
+detail DTO. Detail responses include `estimates[]`; each estimate includes
+`revisionNo`, `state`, `diagnosisNote`, `subtotalPkr`, timestamps and immutable
+`items[]` with server-computed `lineTotalPkr`.
+
+Supported B07 actions are:
+
+- `SUBMIT_ESTIMATE`: `{ diagnosisNote, items }`, `INSPECTING -> ESTIMATE_REVIEW`, assigned technician only. Creates revision 1 in `REVIEW`.
+- `SEND_ESTIMATE`: `{ diagnosisNote, items }`, `ESTIMATE_REVIEW -> AWAITING_CUSTOMER`, same-shop OWNER/SA. Replaces the editable review draft and freezes it as `SENT`.
+- `APPROVE_ESTIMATE`: empty payload, `AWAITING_CUSTOMER -> ESTIMATE_APPROVED`, owning customer only. Marks the latest sent revision `APPROVED`.
+- `REJECT_ESTIMATE`: optional `{ reason }`, `AWAITING_CUSTOMER -> ESTIMATE_REJECTED`, owning customer only. Marks the latest sent revision `REJECTED`.
+- `REVISE_ESTIMATE`: `{ diagnosisNote, items }`, `ESTIMATE_REJECTED -> ESTIMATE_REVIEW`, same-shop OWNER/SA. Creates revision `latest + 1` in `REVIEW`.
+
+Estimate payloads accept 1-100 items. `PART` lines require an existing same-shop
+`inventory_parts.id`, including zero-stock SKUs. `LABOUR` lines must not carry a
+part ID. The client never supplies subtotal or line totals; the database computes
+line totals and subtotal inside the transaction. Sent, approved and rejected
+versions are never mutated silently; only the current review draft can be edited
+while sending.
+
+

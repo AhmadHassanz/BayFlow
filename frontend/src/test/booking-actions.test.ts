@@ -59,6 +59,34 @@ it('validates each B06 action shape before calling the service', () => {
   if (cancel.action === 'CANCEL_BOOKING') expect(cancel.payload.reason).toBe('Customer changed plans');
 });
 
+
+it('validates B07 estimate action shapes and rejects author-supplied totals', () => {
+  const estimate = {
+    diagnosisNote: 'Brake pads are below safe operating thickness.',
+    items: [
+      { kind: 'PART' as const, partId: tech.toUpperCase(), descriptionSnapshot: 'Brake pads', quantity: 2, unitPricePkr: 1500 },
+      { kind: 'LABOUR' as const, descriptionSnapshot: 'Brake labour', quantity: 1, unitPricePkr: 2500 },
+    ],
+  };
+  const submittedEstimate = bookingActionInput.parse({ action: 'SUBMIT_ESTIMATE', expectedVersion: 3, idempotencyKey: id, payload: estimate });
+  expect(submittedEstimate.action).toBe('SUBMIT_ESTIMATE');
+  if (submittedEstimate.action === 'SUBMIT_ESTIMATE') expect(submittedEstimate.payload.items[0])
+    .toMatchObject({ partId: tech, quantity: 2 });
+  expect(bookingActionInput.parse({ action: 'SEND_ESTIMATE', expectedVersion: 4, idempotencyKey: id, payload: estimate }).action)
+    .toBe('SEND_ESTIMATE');
+  expect(bookingActionInput.parse({ action: 'APPROVE_ESTIMATE', expectedVersion: 5, idempotencyKey: id }))
+    .toMatchObject({ payload: {} });
+  const rejection = bookingActionInput.parse({ action: 'REJECT_ESTIMATE', expectedVersion: 5, idempotencyKey: id, payload: { reason: '  Too expensive  ' } });
+  expect(rejection.action).toBe('REJECT_ESTIMATE');
+  if (rejection.action === 'REJECT_ESTIMATE') expect(rejection.payload.reason).toBe('Too expensive');
+  expect(bookingActionInput.parse({ action: 'REVISE_ESTIMATE', expectedVersion: 6, idempotencyKey: id, payload: estimate }).action)
+    .toBe('REVISE_ESTIMATE');
+  expect(() => bookingActionInput.parse({ action: 'SUBMIT_ESTIMATE', expectedVersion: 3, idempotencyKey: id,
+    payload: { ...estimate, subtotalPkr: 1 } })).toThrow();
+  expect(() => bookingActionInput.parse({ action: 'SUBMIT_ESTIMATE', expectedVersion: 3, idempotencyKey: id,
+    payload: { diagnosisNote: 'Bad labour item', items: [{ kind: 'LABOUR', partId: tech, descriptionSnapshot: 'Labour', quantity: 1, unitPricePkr: 1 }] } })).toThrow();
+});
+
 it.each([
   { action: 'SET_STATUS', expectedVersion: 0, idempotencyKey: id, payload: { status: 'COMPLETED' } },
   { action: 'CONFIRM_BOOKING', expectedVersion: -1, idempotencyKey: id },
@@ -113,3 +141,4 @@ it('parses shop booking filters and rejects unknown query keys', async () => {
   response = await getShop(new Request(`http://localhost:3000/api/v1/shops/${id}/bookings?role=OWNER`), context);
   expect(response.status).toBe(400);
 });
+
