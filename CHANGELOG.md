@@ -1,6 +1,12 @@
 # Changelog
 
-## B04 - 2026-10-09 (Cloud application pending approval)
+## B04 - 2026-10-09
+
+- Applied the reviewed B04 migration to Cloud with explicit user approval;
+  fresh dry-run and push included only B04, no seeds or role changes.
+- Cloud lint passed with no schema errors; real catalog acceptance passed 7/7
+  and post-migration RLS regression passed 81/81, including fixture cleanup.
+  B04 is PASSED. See the B04 verification guide for retained limitations.
 
 - Added atomic shop/profile/OWNER membership setup and owner-only shop settings,
   plus service create/edit/soft-deactivation with strict tenant checks.
@@ -12,11 +18,12 @@
   the public slot view exposes only aggregate remaining capacity and local date.
 - Passed 88 native verification tests, 69 frontend tests, 13 production HTTP smoke checks,
   lint, both typechecks and production build. Cloud dry-run lists only B04,
-  no seeds/roles. Real B04 Cloud verification remains approval-gated.
+  no seeds/roles. Real B04 Cloud verification subsequently passed as recorded above.
 - Added a guarded Cloud catalog suite and current-date RLS fixtures; preserved
   the user's generated-types modification. No B05 or UI work was added.
 - Reran existing Cloud RLS against B03 schema with the updated fixtures: 81/81
-  passed with successful cleanup. B04 Cloud migration has not been pushed.
+  passed with successful cleanup. This pre-migration run is separate from the
+  subsequent B04 Cloud acceptance and post-migration regression above.
 
 ## B03 - 2026-10-09
 

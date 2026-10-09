@@ -142,8 +142,22 @@ authorization or SQL constraints.
 
 ## Cloud gate and remaining limitations
 
-B04 Cloud schema is **NOT APPLIED**. B04 real Cloud catalog suite is **NOT RUN**;
-it refuses fixture provisioning until the exact migration version exists. The
+B04 Cloud schema was applied on 2026-10-09 after the user's explicit approval.
+The linked project reference was verified as `tlqvlsrmxueuuzxyltej`. A fresh
+dry-run listed only `20261009121005_b04_public_catalog_and_slots.sql`, with
+`seeds: []` and `roles: []`; `db push --yes` exited 0 and applied exactly that
+migration. No deployed migration was edited and no Cloud reset was performed.
+Cloud lint exited 0: **No schema errors found** in extensions/private/public.
+The real Cloud catalog suite exited 0: **7/7 passed, 0 failed** (85983.9282 ms),
+including its cleanup hook. It confirmed hidden per-run shops, cancellation of
+its exact fixture booking, shared fixture deactivation and session sign-out.
+Post-migration Cloud RLS regression exited 0: **81/81 passed, 0 failed**
+(149076.3038 ms). This run exercised the applied B04 schema, including the
+private function allowlist, public projections, all 18 tables' direct-write
+denial and tenant/vehicle ownership isolation. Cleanup confirmed hidden test
+shops, deactivated staff and signed-out Auth sessions; audit fixtures remain.
+
+The suite refuses fixture provisioning until the exact migration exists. The
 suite starts a production Next.js server without any Admin key, then checks
 anonymous/staff denial, multi-shop owner creation, directory/detail privacy,
 service edits/deactivation, deterministic slots, counted capacity, conflict
@@ -152,9 +166,9 @@ only in memory through the existing CLI login. Cleanup matches unique per-run
 shop names and known marked owner IDs, cancels its exact fixture booking, hides
 shops, then deactivates/signs out shared fixtures. Audit-safe records remain.
 
-B04 remains IN_PROGRESS until explicit approval, Cloud application, Cloud lint,
-the new suite and post-migration RLS regression checks pass. No B05 work is
-included. UI rendering belongs to F01/F02, and Vercel/browser integration remains
+B04 is **PASSED**. Implementation checkpoint: `2037518`; the subsequent Cloud
+verification checkpoint records explicit approval, application and these results.
+No B05 implementation is included. UI rendering belongs to F01/F02, and Vercel/browser integration remains
 a separate gate. No rating, availability or successful test outcome is fabricated.
 
 Technical references consulted:

@@ -2,8 +2,8 @@
 
 BayFlow is a multi-tenant auto repair workflow platform for customers, garage owners, service advisors, technicians, parts staff, and QC inspectors.
 
-**Phase B04: implemented and locally verified; Cloud application pending approval.**
-B01-B03 remain verified in Cloud. B04 adds public shops/services/availability,
+**Phase B04: passed local and Cloud verification.**
+B01-B04 are verified in Cloud. B04 adds public shops/services/availability,
 transactional owner shop setup, service management and deterministic 14-day slots.
 Booking mutations and UI remain outside this phase. See
 [B04 evidence](backend/docs/b04-catalog-verification.md) and
@@ -79,8 +79,9 @@ Never reset Cloud or include the local seed in a Cloud push. Future migrations
 require review before application.
 The additional B03 migration `20261009100642_b03_auth_and_team.sql` is applied
 locally and in Cloud. Cloud lint reports no schema errors.
-B04 migration `20261009121005_b04_public_catalog_and_slots.sql` passed native
-verification and Cloud dry-run; it has not been applied to Cloud.
+B04 migration `20261009121005_b04_public_catalog_and_slots.sql` is applied in
+Cloud after explicit approval. Cloud lint, 7/7 catalog tests and 81/81
+post-migration RLS regression tests passed, including fixture cleanup.
 
 Supabase CLI generated [database types](frontend/src/lib/supabase/database.types.ts)
 from the linked Cloud schema. Run
@@ -153,7 +154,7 @@ Test identities and immutable audit fixtures remain in Cloud; test shops are
 hidden and test staff deactivated after the run. Distributed Auth/staff
 provisioning failures can require operator recovery; see the B03 guide. Workflow
 RPCs, idempotency and transition guards belong to later phases. B04 Cloud
-acceptance is pending approval/application and its real catalog test suite.
+acceptance passed; Vercel/browser integration remains a separate gate.
 Referenced cancelled appointments can keep a changed slot start unavailable;
 the B04 guide records schedule preservation and horizon-refresh behavior.
 B05 has not started.
