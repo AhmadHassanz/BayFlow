@@ -13,7 +13,8 @@ verified locally only, and will provide CLI commands for the operator to apply.
 
 ## Changes and security
 
-- Migration: `20261009151303_b06_booking_state_engine.sql`; seven migrations now
+- Migrations: `20261009151303_b06_booking_state_engine.sql` and follow-up
+  `20261009153959_b06_lint_list_my_bookings_input.sql`; eight migrations now
   apply in the native harness. Previously deployed migrations are unchanged.
 - New private `booking_action_receipts` table stores actor/idempotency key,
   canonical action payload, booking ID and result version. RLS is enabled, no
@@ -40,7 +41,7 @@ verified locally only, and will provide CLI commands for the operator to apply.
 Executed local results:
 
 - `npm run db:verify:postgres`: **110/110 passed, 0 failed**, exit 0
-  (64191.5885 ms for final run). Seven migrations + seed applied to a fresh
+  (44356.205 ms for final run). Eight migrations + seed applied to a fresh
   generated loopback PostgreSQL 17 cluster; second application returned
   `applied: []`. The disposable cluster shut down. This did not contact Cloud.
 - Six B06 native tests cover confirm/assign/start, action idempotency, changed-key
@@ -53,6 +54,10 @@ Executed local results:
 - `npm run test:smoke`: **20/20 passed**, exit 0. Includes B06 route 401/403
   no-store/safe-envelope checks; uses no credentials and performs no Cloud writes.
 - Cloud B06/RLS JavaScript syntax checks: exit 0 before manual application.
+- After the first manual B06 push, Cloud lint reported one warning:
+  `public.list_my_bookings` had an unused `input` parameter. The follow-up
+  migration keeps the API signature, validates that optional input is `{}`, and
+  removes the lint warning source without editing the already-applied B06 migration.
 
 ## Manual Cloud commands and acceptance gate
 
@@ -71,7 +76,10 @@ if ((Get-Content supabase/.temp/project-ref -Raw).Trim() -ne 'tlqvlsrmxueuuzxylt
 }
 npx --no-install supabase migration list --linked
 npx --no-install supabase db push --dry-run
-# Confirm only 20261009151303_b06_booking_state_engine.sql, with no seeds/roles.
+# Confirm only pending B06 migrations:
+# 20261009153959_b06_lint_list_my_bookings_input.sql if the base B06 migration
+# was already applied, or both B06 migrations if applying from B05.
+# Confirm no seeds/roles.
 # Run the next command only after reviewing that output.
 npx --no-install supabase db push
 npm run db:lint

@@ -89,8 +89,10 @@ after user-run review/dry-run/push. Cloud lint, 9/9 booking acceptance and 81/81
 RLS regression tests passed. It adds one private receipt table and the narrow
 booking RPC; all 18 public tables retain their existing RLS/write-denial boundaries.
 B06 migration `20261009151303_b06_booking_state_engine.sql` is verified locally
-only and has **not** been pushed to Cloud. It adds one private action receipt
-table, guarded booking action/read RPCs and no direct public table writes.
+and the user applied it manually; Cloud lint then required follow-up
+`20261009153959_b06_lint_list_my_bookings_input.sql`, which is pending manual
+application. B06 adds one private action receipt table, guarded booking action/read
+RPCs and no direct public table writes.
 
 Supabase CLI generated [database types](frontend/src/lib/supabase/database.types.ts)
 from the linked Cloud schema. Run
