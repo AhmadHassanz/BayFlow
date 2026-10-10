@@ -9,7 +9,7 @@ test('public landing, wizard and keyboard signup validation are connected and fi
   await noHorizontalPageOverflow(page); await capture(page, info, 'landing');
   await page.goto(`/book/${demoShop}`); await expect(page.getByRole('heading', { level: 2 }).first()).toBeVisible();
   await noHorizontalPageOverflow(page); await capture(page, info, 'wizard');
-  await page.goto('/signup'); await page.getByLabel('Full name').focus(); await page.keyboard.press('Tab');
+  await page.goto('/signup'); await page.getByRole('link', { name: /Customer/ }).click(); await page.getByLabel('Full name').focus(); await page.keyboard.press('Tab');
   await expect(page.getByLabel('Email address')).toBeFocused(); await page.keyboard.press('Tab');
   await expect(page.getByLabel('Password')).toBeFocused(); await page.keyboard.press('Tab'); await page.keyboard.press('Enter');
   await expect(page.locator('#auth-form-error')).toContainText('Enter your name'); expect(crashes).toEqual([]);

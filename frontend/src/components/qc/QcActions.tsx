@@ -45,7 +45,7 @@ export function QcActions({ booking, bookingId, shopId, actorId, returnTo, refre
       setIntent({ input, title: action === 'CLAIM_QC' ? 'Claim quality inspection' : action === 'PASS_QC' ? 'Pass quality inspection' : 'Fail quality inspection',
         summary: action === 'CLAIM_QC' ? 'Claim this unclaimed inspection? The server allows only the first eligible claimant to proceed.'
           : action === 'PASS_QC' ? 'Record all completed checks as passed and release the vehicle for collection?'
-            : `Record this QC failure and return the repair to its original technician? Issue: ${title.trim()} — ${description.trim()}`,
+            : `Record this QC failure and return the repair to its original technician? Issue: ${title.trim()}: ${description.trim()}`,
       });
     } catch (failure) { setError(failure instanceof Error ? failure.message : 'Check the inspection fields.'); }
   }

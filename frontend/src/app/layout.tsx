@@ -6,7 +6,7 @@ import './globals.css';
 const editorial = Fraunces({ subsets: ['latin'], variable: '--font-editorial', display: 'swap' });
 const body = Manrope({ subsets: ['latin'], variable: '--font-body', display: 'swap' });
 export const metadata: Metadata = {
-  title: 'BayFlow — Better repairs, fewer unknowns',
+  title: 'BayFlow | Better repairs, fewer unknowns',
   description: 'Find a workshop, explore its services, and arrange your next visit with BayFlow.',
 };
 

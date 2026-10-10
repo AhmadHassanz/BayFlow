@@ -2,10 +2,9 @@
 
 ## Status
 
-R00 is **BLOCKED only on committing and deploying the final health route and
-release evidence**. All currently deployable application, database and workflow
-gates are passing. The existing production build predates `/api/v1/health`, which
-the blueprint's release checklist explicitly requires.
+R00 is **PASSED**. Commit `03539b5` is deployed at
+`https://bay-flow-delta.vercel.app`. The final production smoke passed all five
+checks, including the live Supabase-backed `/api/v1/health` route.
 
 ## Release scope
 
@@ -64,26 +63,28 @@ A01-A21 acceptance matrix. No optional feature is added.
 - All 16 migrations match Cloud; dry-run empty; Cloud lint clean.
 - Repository audit: zero findings; local credential files ignored.
 
-## Required final deployment gate
+## Final deployment gate
 
-1. Commit and push the R00 health/docs changes.
-2. Wait for Vercel production to report Ready.
-3. Run from `frontend/`:
+The user committed, pushed and redeployed the release candidate as `03539b5`.
+The final command was run from `frontend/`:
 
 ```powershell
 $env:BAYFLOW_PRODUCTION_URL='https://bay-flow-delta.vercel.app'
 npm run test:smoke:production
 ```
 
-4. Require `{"checks":5,"status":"passed"}` and verify `/api/v1/health` returns
-   `{ "data": { "status": "ok" }, "error": null }`.
-5. Run the final repository audit against the committed tree.
+Final output:
 
-Only then mark R00 PASSED and declare the release ready.
+```json
+{"origin":"https://bay-flow-delta.vercel.app","checks":5,"status":"passed"}
+```
 
-The pre-deployment five-check smoke currently fails exactly at the expected gate:
-the deployed commit returns HTTP 404 for `/api/v1/health`. No other production
-failure is claimed.
+The live route returned the healthy envelope. The smoke also reconfirmed the
+landing page, directory, safe invalid-input correlation, unauthenticated denial
+and B12 response-security headers. Local `main` and `origin/main` both resolved to
+`03539b5` before this final evidence-only update. The repository audit inspected
+335 candidates, 335 indexed blobs, three ignored local env files and 1062 reachable
+history objects with zero findings.
 
 ## Risks and limitations
 
@@ -95,5 +96,12 @@ failure is claimed.
 - Safari and Firefox are not automated.
 - Existing development-tool advisories remain outside the release scope; no
   last-minute dependency upgrade was attempted.
-- No Cloud reset, reseed, migration application, generated-type rewrite, commit,
-  push or deployment occurred during this R00 implementation turn.
+- No Cloud reset, reseed, migration application or generated-type rewrite occurred.
+- This final PASSED evidence update was made after deployment and remains local
+  until the user commits it; the deployed application code itself is verified.
+
+## Release decision
+
+BayFlow is release-ready for the hackathon demo. The required deployed lifecycle,
+authorization boundaries, transaction invariants, documentation, demo identities,
+mobile role access and operational smoke checks have machine-verifiable evidence.
