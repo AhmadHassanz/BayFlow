@@ -35,7 +35,19 @@ export async function applyBookingAction(client: Client, bookingId: string, inpu
 export async function getBooking(client: Client, bookingId: string) {
   const result = await client.rpc('get_booking', { input: { bookingId } });
   if (result.error) bookingActionError(result.error);
-  return bookingDetailOutput.parse(result.data);
+  const booking = bookingDetailOutput.parse(result.data);
+  // Resolve context only after the guarded RPC authorizes this exact booking.
+  const [profile, vehicle] = await Promise.all([
+    client.from('profiles').select('full_name, phone').eq('id', booking.customerId).maybeSingle(),
+    client.from('vehicles').select('registration_plate, make, model, year, color, mileage')
+      .eq('id', booking.vehicleId).eq('customer_id', booking.customerId).maybeSingle(),
+  ]);
+  if (profile.error || vehicle.error) throw new ApiError(500, 'DATABASE_ERROR', 'Booking context could not be loaded.');
+  return bookingDetailOutput.parse({ ...booking,
+    customer: profile.data ? { fullName: profile.data.full_name, phone: profile.data.phone } : null,
+    vehicle: vehicle.data ? { registrationPlate: vehicle.data.registration_plate, make: vehicle.data.make,
+      model: vehicle.data.model, year: vehicle.data.year, color: vehicle.data.color, mileageKm: vehicle.data.mileage } : null,
+  });
 }
 
 export async function listMyBookings(client: Client) {

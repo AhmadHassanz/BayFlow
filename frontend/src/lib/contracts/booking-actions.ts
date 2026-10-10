@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { bookingCreationOutput, bookingStatus } from './bookings';
 import { uuid } from './auth';
 import { orderPartsPayload, receivePartsPayload, requiredPartOutput, purchaseOrderOutput, partAllocationOutput } from './parts';
+import { customerContextOutput, vehicleContextOutput } from './technician';
 
 const identifier = uuid.transform(value => value.toLowerCase());
 const emptyPayload = z.object({}).strict().default({});
@@ -21,7 +22,7 @@ const estimateItemInput = z.discriminatedUnion('kind', [
     unitPricePkr: z.number().int().nonnegative().max(999_999_999),
   }).strict(),
 ]);
-const estimatePayload = z.object({
+export const estimatePayload = z.object({
   diagnosisNote: z.string().trim().min(3).max(4000),
   items: z.array(estimateItemInput).min(1).max(100),
 }).strict();
@@ -117,6 +118,8 @@ export const estimateOutput = z.object({
   items: z.array(estimateItemOutput),
 });
 export const bookingDetailOutput = bookingCreationOutput.extend({
+  customer: customerContextOutput.nullable().default(null),
+  vehicle: vehicleContextOutput.nullable().default(null),
   technicianUserId: uuid.nullable(),
   partsUserId: uuid.nullable(),
   qcClaimedBy: uuid.nullable(),
@@ -152,7 +155,7 @@ export const bookingDetailOutput = bookingCreationOutput.extend({
   })).default([]),
   history: z.array(bookingHistoryEntry),
 });
-export const bookingListItemOutput = bookingDetailOutput.omit({ history: true, estimates: true, requiredParts: true, purchaseOrders: true, partAllocations: true, qcRuns: true, qcIssues: true });
+export const bookingListItemOutput = bookingDetailOutput.omit({ customer: true, vehicle: true, history: true, estimates: true, requiredParts: true, purchaseOrders: true, partAllocations: true, qcRuns: true, qcIssues: true });
 export const bookingActionRpcOutput = z.object({ booking: bookingDetailOutput, replayed: z.boolean() });
 export const shopBookingListQuery = z.object({
   status: bookingStatus.optional(),

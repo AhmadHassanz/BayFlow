@@ -4,9 +4,9 @@ BayFlow follows a vehicle repair from customer booking through inspection,
 estimates, parts, repair, quality control and collection. It supports customers,
 owners, service advisors, technicians, parts staff and QC inspectors.
 
-Backend phases B01–B11 are implemented. Frontend F01–F05 is implemented in the
-working tree; F05 booking details are read-only by agreement. Feature development
-is paused for repository cleanup. See [the progress ledger](docs/05-progress-ledger.md)
+Backend phases B01–B11 are implemented. Frontend F01–F06 is implemented; F06 adds
+owner shop setup, summaries, settings, services and team management. Shared booking
+details remain read-only until the workflow phases. See [the progress ledger](docs/05-progress-ledger.md)
 for individual gates and limitations; browser/Cloud checks are separate from
 automated frontend checks.
 
@@ -132,3 +132,18 @@ was previously committed, revoke/rotate it before addressing history.
 See [the cleanup and security audit](docs/repository-hygiene.md) for the current
 findings and deliberate exclusions. No cleanup operation commits, pushes, changes
 Cloud state or rotates credentials automatically.
+
+## Opt-in F13 headless QA
+
+From `frontend/`, `npm run test:e2e:list` lists tests without launching a server.
+Install Chromium with `npx playwright install chromium` when needed. Set
+`BAYFLOW_E2E_START_SERVER=1` to build an isolated `.next-f13` production server at
+`http://localhost:3104` and run `npm run test:e2e -- visual.spec.ts`.
+Authenticated checks use the private ignored B11 demo credentials file.
+
+The full journey additionally requires `BAYFLOW_E2E_DEMO_WRITES=1` and
+`BAYFLOW_E2E_PARTS=1`. It leaves real completed bookings, orders, notifications
+and stock movements in the known demo project, and saves unchanged owner Hours
+settings to refresh availability. Run only with authorization for those writes.
+No Cloud reset/seed or deployment occurs. Screenshots are ignored under
+`frontend/test-results`; see [F13 evidence](docs/verification/f13/README.md).

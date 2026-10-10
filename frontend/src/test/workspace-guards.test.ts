@@ -52,6 +52,7 @@ it('denies inactive membership and unauthorized role routes on the server', asyn
   await expect(shopWorkspace(shopId, '/advisor', 'advisor')).rejects.toThrow('not-found');
   setup();
   await expect(shopWorkspace(shopId, '/technician', 'technician')).rejects.toThrow('not-found');
+  await expect(shopWorkspace(shopId, '/settings', 'settings')).rejects.toThrow('not-found');
 });
 it('validates shop IDs before querying and uses the RLS client for shop metadata', async () => {
   const { shops } = setup();

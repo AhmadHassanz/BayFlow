@@ -9,7 +9,7 @@ export const statusInfo: Record<BookingStatus, { label: string; owner: string; n
   ASSIGNED: { label: 'Technician assigned', owner: 'Technician', next: 'Your technician will begin the inspection.' },
   INSPECTING: { label: 'Inspection underway', owner: 'Technician', next: 'Your technician is preparing the diagnosis and estimate.' },
   ESTIMATE_REVIEW: { label: 'Estimate under review', owner: 'Service advisor', next: 'The advisor will review the estimate before sending it to you.' },
-  AWAITING_CUSTOMER: { label: 'Your decision needed', owner: 'Customer', next: 'Your estimate is ready. Contact the workshop to review and discuss it.' },
+  AWAITING_CUSTOMER: { label: 'Your decision needed', owner: 'Customer', next: 'Review the sent estimate on your personal booking record, then approve or decline the proposed work.' },
   ESTIMATE_APPROVED: { label: 'Estimate approved', owner: 'Service advisor', next: 'The advisor will arrange parts for the approved work.' },
   ESTIMATE_REJECTED: { label: 'Estimate declined', owner: 'Service advisor', next: 'The advisor will review your decision and discuss the next step.' },
   PARTS_PENDING: { label: 'Preparing parts', owner: 'Parts team', next: 'The parts team is checking availability.' },

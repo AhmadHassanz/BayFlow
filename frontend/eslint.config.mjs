@@ -4,5 +4,5 @@ import typescript from 'eslint-config-next/typescript';
 
 export default defineConfig([
   ...next, ...typescript,
-  globalIgnores(['.next/**', 'next-env.d.ts', 'src/lib/supabase/database.types.ts']),
+  globalIgnores(['.next/**', '.next-f13/**', 'test-results/**', 'playwright-report/**', 'next-env.d.ts', 'src/lib/supabase/database.types.ts']),
 ]);

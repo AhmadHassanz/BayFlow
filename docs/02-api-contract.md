@@ -1,6 +1,7 @@
 # API Contract
 
-No API routes are implemented in S00. This document freezes the future `/api/v1` contract.
+This document freezes the implemented `/api/v1` contract. The S00 baseline had no
+routes; the phase-specific sections below record the routes added since then.
 
 ## Uniform HTTP Behavior
 
@@ -49,7 +50,10 @@ Rules:
 | `GET /api/v1/shops/[shopId]` | Public shop/services/hours | Public |
 | `GET /api/v1/shops/[shopId]/slots` | `?date=YYYY-MM-DD`; `startsAt`, `capacityRemaining` | Public |
 | `POST /api/v1/owner/shops` | name, city, address, phone, hours, capacity | Authenticated owner |
+| `GET /api/v1/owner/shops` | `?page=`; owned shops with authoritative booking counts | Authenticated owner identity |
+| `GET /api/v1/owner/shops/[id]` | Owned shop with authoritative booking counts | Owner of shop |
 | `PATCH /api/v1/owner/shops/[id]` | Allowed shop settings only | Owner of shop |
+| `GET /api/v1/shops/[id]/team` | `?page=` owner team; `?scope=technicians|parts&page=` assignment choices | Owner for full team; owner/advisor for scoped active choices |
 | `POST /api/v1/shops/[id]/team` | email/name/role -> created staff credential/invite | Owner of shop; admin key server-only |
 | `PATCH /api/v1/shops/[id]/team/[memberId]` | Edit role or deactivate membership | Owner of shop |
 | `GET /api/v1/shops/[id]/services` | Catalog list | Public safe |
@@ -61,6 +65,7 @@ Rules:
 | `GET /api/v1/shops/[id]/bookings` | `?status=&assignee=&page=` | Shop membership and role scope |
 | `GET /api/v1/bookings/[id]` | Booking, allowed actions, history, estimate data | Owner/customer/authorized shop role |
 | `POST /api/v1/bookings/[id]/actions` | action, payload, expectedVersion, idempotencyKey | State machine actor guard |
+| `GET /api/v1/bookings/[id]/estimate-catalog` | `?page=`; active same-shop part identity, SKU and name | Assigned technician |
 | `GET /api/v1/shops/[id]/inventory` | Part SKU, stock, cost | Parts/owner; tech required summary only |
 | `POST /api/v1/shops/[id]/inventory` | Add/update parts catalog | Parts or owner |
 | `POST /api/v1/bookings/[id]/purchase-orders` | Missing parts items | Assigned parts person |
@@ -587,3 +592,347 @@ existing 50-row contract; no total count is invented. Shared detail uses GET
 `/api/v1/bookings/[id]` plus an additional shop-ID check. RLS/RPC access remains
 authoritative if memberships change after rendering. All reads handle session
 expiry, forbidden/not-found, network failure, retry, loading and empty states.
+
+## F06 owner control center (2026-10-10)
+
+The user explicitly approved adding the private GET contracts needed for F06 to
+existing routes. No migrations, tables, columns, RLS policies or write grants changed.
+
+| GET route | Output | Authorization |
+| --- | --- | --- |
+| `/api/v1/owner/shops?page=N` | `{ items: [{ shop, counts }], page, pageSize: 50, total }` | Verified Auth; query restricted to authoritative `owner_user_id`, with user-scoped RLS |
+| `/api/v1/owner/shops/[id]` | `{ shop, counts }` | Existing `requireOwner`: actual owner ID plus active OWNER membership |
+| `/api/v1/shops/[id]/team?page=N` | `{ items: [{ id, shopId, userId, role, active, fullName }], page, pageSize: 50, total }` | Existing `requireOwner`; includes inactive memberships |
+| `/api/v1/shops/[id]/services?scope=owner&page=N` | `{ items: [serviceOutput], page, pageSize: 50, total }` | Existing `requireOwner`; includes inactive services |
+
+Owner `shop` uses existing `shopOutput` including publication state. `counts` has
+four nonnegative integers: `pending` (PENDING), `inProgress` (all statuses except
+PENDING, READY_FOR_PICKUP, COMPLETED and CANCELLED), `readyForPickup`
+(READY_FOR_PICKUP) and `completed` (COMPLETED, all time). Counts use exact HEAD
+queries scoped to each shop; they never derive totals from a truncated booking
+page. Separate queries are informational observations, not a transactional
+workflow snapshot. Counts are per shop, not an invented aggregate over all pages.
+A count failure is an error, never a fabricated zero. The index exposes only owned
+shops; an identity with none receives an empty list. Private detail requires both
+ownership and membership checks before selecting settings/counts.
+
+Owner lists use deterministic ordering and the existing positive page range
+1..99999, capped at 50 rows. Duplicate/unknown query fields are rejected.
+`scope=owner` is the only private service scope; ordinary GET services remains
+public-safe and excludes unpublished records as before. Read responses use
+private/no-store and Vary Cookie. Read services use the user-scoped client, never
+the Admin client. Team profile projection is `full_name` only; Auth emails,
+passwords and metadata are not fetched. Owner membership cannot be edited through
+the existing staff PATCH contract.
+
+Frontend `/owner` now renders real summaries and shop links, with a first-shop
+empty state for identities without active memberships. Active staff-only identities
+remain denied from this owner page. `/owner/shops/new` requires verified Auth;
+the existing creation SQL decides first-owner eligibility and prevents staff or
+inactive-staff self-promotion. No client-supplied owner ID, role or slug is sent.
+`/shops/[slug]/settings` requires a UUID shop ID and verified OWNER membership on
+the server, then loads the guarded private GET. The dynamic parameter name reuses
+the existing public profile route; public slug profiles are unchanged.
+
+Settings sections: Operations (details/publication and counts), Team, Services,
+Hours (split-shift hours/timezone/duration/capacity). Writes use the existing
+POST/PATCH endpoints and schemas. Service removal means `active:false` and remains
+reactivatable. Public directory/profile reads already fetch fresh data; the next
+fetch reflects the committed catalog. Hours saves use the existing atomic slot
+refresh and SCHEDULE_CONFLICT guards; the UI never inserts appointments itself.
+
+Mutations have a 20-second abort bound, same-origin credentials, no automatic
+retry and authoritative DTO validation. Visible pending locks prevent repeated
+submits. Network/5xx/invalid-response uncertainty blocks another shop/service/staff
+creation in that mounted form and directs the user to inspect records/operator
+state. These POST endpoints do not have idempotency keys: reloading/navigating
+away clears the form lock, so checking uncertain results remains necessary.
+Membership/configuration PATCH retries update the same named record.
+
+Staff creation sends the owner-supplied initial password only to the existing
+same-origin team endpoint. Optional generation uses browser crypto. Successful
+creation shows those supplied credentials in memory, masked by default, with
+explicit reveal/copy and private-sharing caution. They are never returned by the
+API, persisted in local/session storage or included in roster reads. Closing the
+section/dismissing them clears the display. Duplicate email does not reset an
+account. STAFF_PROVISIONING_INCOMPLETE requires operator review rather than a
+blind retry; uncertain staff creation clears the form's password.
+
+The local app env currently has public configuration only. Live staff creation
+requires exactly one server-only SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY,
+configured privately. No Admin key was fetched, printed, embedded or committed by
+F06. Automated tests mock Auth/transport; no Cloud account was created in this phase.
+
+## F07 advisor desk integration (2026-10-10)
+
+The user approved `GET /api/v1/shops/[id]/team?scope=technicians&page=N`.
+This scope requires verified Auth and active same-shop OWNER/SA membership, uses
+the existing membership/profile RLS policies, and returns only active same-shop
+TECHNICIAN choices: `{ items: [{ userId, fullName }], page, pageSize: 50, total }`.
+Name is nullable; the user ID remains the assignment identity. Results order by
+user ID. No scope retains F06's owner-only full roster including inactive members.
+Unknown/duplicate query keys, invalid scope and invalid pages return 400. No Auth
+email, password, Admin client, schema change or policy change is involved.
+
+Advisor inbox filters use the existing single-status booking list API. New jobs,
+estimate work and pickup work select a default stage and offer their related
+stages in a labelled selector. Filtering resets pagination; refresh/focus reads
+the live ledger. There are no invented total counts or later-phase write controls.
+
+Shared staff detail offers CONFIRM_BOOKING, ASSIGN_TECHNICIAN and CANCEL_BOOKING
+according to documented role/status/history affordances. It does not invent an
+allowedActions field; SQL still verifies every actor, state and prerequisite.
+Cancellation is hidden after any recorded IN_REPAIR entry. Actions require a
+confirmation dialog and the existing expectedVersion/idempotencyKey contract.
+Each dialog retains an immutable intent through retries. Pending requests lock
+duplicate submission; uncertain network/5xx/invalid responses lock dismissal and
+permit only same-intent replay. Definite state/access/input errors offer an
+authoritative reload. A successful response is ID/shop checked and followed by
+GET detail; no local status advance is used. Intent locks are in memory only;
+navigation/reload discards them and reads current server state/version. All F07
+actions are guarded version-changing transitions. F09 sends and F11 pickup writes
+remain deferred; real history and read-only estimates remain visible.
+
+## F08 technician workbench integration (2026-10-10)
+
+The user approved these narrow read additions before implementation:
+
+- `GET /api/v1/bookings/[id]/estimate-catalog?page=N` returns
+  `{ items: [{ id, sku, name }], page, pageSize: 50, total }`. Verified cookie Auth
+  delegates to `public.list_estimate_catalog({ bookingId, page })`. Its private
+  definer checks assignment plus an active same-shop TECHNICIAN membership and
+  derives the shop from the booking. Missing/foreign/unassigned/wrong-role jobs
+  are hidden with 404; expired HTTP Auth is 401. Direct anonymous/missing-subject
+  execution is denied. Active catalog items order by SKU then ID, include
+  zero-stock items, and omit stock balance, cost, reorder level and suppliers.
+  Clients cannot supply actor or shop IDs. API query keys/pages are strict.
+- `GET /api/v1/bookings/[id]` now adds nullable `customer: { fullName, phone }`
+  and `vehicle: { registrationPlate, make, model, year, color, mileageKm }`.
+  The existing guarded get_booking RPC authorizes the booking first. User-scoped
+  profile/vehicle queries then bind to that booking's exact customer/vehicle IDs;
+  vehicle additionally filters customer_id. Missing or RLS-hidden context is
+  null, while a query error fails the read rather than inventing context. No Auth
+  email or unavailable contact field is added. Booking lists remain compact;
+  existing SQL action responses omit this context and client parsing defaults it
+  to null until the authoritative GET after mutation.
+
+Migration `20261010110000_f08_estimate_catalog.sql` adds only a narrow invoker RPC
+and guarded private definer. It changes no RLS policy, table, column, status or
+write grant. Authenticated EXECUTE applies only to these guarded functions, with
+empty search paths and qualified references. It was verified using the disposable
+native PostgreSQL harness. Cloud is still applied through 20261010100000; the
+catalog endpoint requires separate forward Cloud application of this migration.
+The additive `database.f08.ts` type overlay preserves database.types.ts.
+
+Technician list requests `assignee=mine`; detail and list additionally reject
+unexpected shop/assignment DTOs before rendering. Technician controls require the
+verified actor's assignment and documented statuses: START_INSPECTION from
+ASSIGNED, SUBMIT_ESTIMATE from INSPECTING, COMPLETE_REPAIR from IN_REPAIR.
+No customer decision, advisor estimate send, parts mutation or QC inspector
+control is added. Real QC issues show open/resolved state and timestamps; repair
+notes are 3–2000 characters, and server resubmission resolves open issues.
+
+Estimate drafts contain 1–100 PART/LABOUR rows. PART identities are selected from
+the guarded catalog, including later pages; unit prices are manually entered
+whole PKR, never populated from private inventory costs. Quantity is positive and
+price nonnegative, each at most 999999999. Diagnosis/descriptions reuse the
+existing estimate schema. BigInt previews reject fractional/blank/exponent/negative
+inputs and totals above the existing SQL limit 2147483647. The UI also checks the
+existing 16384-character action request limit. The submitted payload never includes
+lineTotalPkr or subtotalPkr. Saved itemized lines and totals come from the server.
+
+Forms/repair actions reuse F07's immutable version/key dialog and uncertainty
+locks. Editor drafts survive mounted focus/manual record refresh; tab reload or
+navigation clears them. They do not persist diagnosis/prices as authoritative
+state. Catalog selection moves keyboard focus into its region and returns focus
+to its trigger on selection/close. Pending estimate intents disable the editor.
+
+## F09 estimate review and customer decision (2026-10-10)
+
+F09 integrates the existing B07 actions and booking detail contract. No endpoint,
+DTO field, database migration, policy or write grant is added in this phase.
+
+- OWNER/SA review is available only for the latest REVIEW revision in
+  ESTIMATE_REVIEW. It shows the server source separately from unsaved advisor
+  diagnosis/item edits. Existing PART identities remain attached; descriptions,
+  quantities and prices can change, lines can be removed and LABOUR added. F09
+  does not expand technician-only catalog access or accept manually typed part IDs.
+- SEND_ESTIMATE submits diagnosis/items with expectedVersion and idempotencyKey.
+  The existing SQL computes the total and freezes the current revision as SENT,
+  moves to AWAITING_CUSTOMER and creates the customer's pending notification.
+- The personal booking record renders the latest sent/decided itemized snapshot,
+  whole-PKR server line/subtotals, revision number and created/sent/decision
+  timestamps. Previous sent/decided revisions remain expandable. Unsent REVIEW/
+  DRAFT rows are suppressed on the customer surface even if an unexpected read
+  returns them; their presence as a newer revision also prevents a stale decision.
+- APPROVE_ESTIMATE and REJECT_ESTIMATE are offered only to the owning customer
+  in AWAITING_CUSTOMER with a complete latest SENT revision. Approval submits `{}`;
+  rejection submits an optional trimmed reason up to 500 characters. The modal
+  names the exact revision and server total. Approval authorizes repair and does
+  not collect payment. No advisor/technician customer-decision controls are added.
+- For the latest REJECTED revision in ESTIMATE_REJECTED, OWNER/SA can edit a
+  copy and call REVISE_ESTIMATE. SQL preserves the declined snapshot and creates
+  revision_no + 1 in REVIEW. A separate review/send action is required on the
+  saved new revision. Existing history displays the decision reason/action trail.
+
+Each intent reuses the F07 immutable key/version confirmation, pending duplicate
+lock, uncertainty replay and authoritative GET. Customer decisions never submit
+a revision ID, actor ID or amount: SQL resolves the latest revision while holding
+the booking lock and checks its expectedVersion. Every booking read additionally
+rejects mismatched snapshot booking/shop bindings and duplicate revision numbers.
+
+Advisor drafts reuse the estimate schema, whole-number input rules, exact BigInt
+previews, SQL total ceiling and 16384-character request bound. Submitted payloads
+omit lineTotalPkr/subtotalPkr. Source snapshots are never updated locally. Drafts
+survive mounted record refresh, but a changed server version/revision disables
+submission until explicit reset to the latest server source; page reload clears
+unsaved edits. UI status/timestamps/totals come from the follow-up GET.
+
+F08's 20261010110000 catalog migration remains pending on Cloud. F09 uses existing
+recorded PART identities and B07 actions and introduces no additional rollout
+requirement. Live creation of new technician PART estimates still needs that F08
+rollout; browser/Cloud workflow acceptance is separate from automated F09 checks.
+
+## F10 parts desk and approved-estimate handoff (2026-10-10)
+
+The user approved `GET /api/v1/shops/[id]/team?scope=parts&page=N`, using the
+same active OWNER/SA guard and existing RLS as technician choices. It returns
+`{ items: [{ userId, fullName }], page, pageSize: 50, total }`, active same-shop
+PARTS members only, ordered by user ID. No scope keeps the owner-only full roster.
+Other scopes/query keys and duplicates are rejected. No email/password/Admin
+client, migration, policy or direct write privilege is added. ASSIGN_PARTS now
+appears in advisor detail at ESTIMATE_APPROVED and uses the existing named action.
+
+The parts desk reads role-scoped bookings with assignee=mine and exposes a separate
+paginated inventory ledger with real SKU/name/on-hand/reorder/cost/active values.
+Unexpected assignment/shop DTOs are rejected. Preparation detail requires the
+verified PARTS actor's assignment, an approved latest estimate and matching server
+required quantities/PO shop/booking bindings. Names come from the approved estimate
+snapshot; SKU/private cost reference is the existing inventory read.
+
+ORDER_PARTS, RECEIVE_PARTS, MARK_PARTS_READY and ALLOCATE_PARTS use the shared
+actions endpoint and existing payloads, version/key confirmation and uncertainty
+locks. Order limits are previews of requirement minus current stock minus this
+job's undelivered order quantities; the SQL check remains authoritative. Receipt
+fields are explicit delivered-now deltas bounded by ordered-minus-received;
+blank/zero rows are omitted, positive whole quantities are required. Only parts
+stages offer procurement/receipt writes; outstanding order records remain visible
+after repair but cannot be received through this scope.
+
+Readiness/allocate buttons require sufficient current stock, including the existing
+labour-only flow. Allocation appears only in PARTS_READY and never updates stock
+locally. A STOCK_CONFLICT offers reload and missing-stock recovery. Every successful
+action refetches detail; form quantities clear after a confirmed result, including
+same-state partial receipt. The stock comparison labels an actual read snapshot
+before the saved action and the current authoritative server stock; it does not
+attribute concurrent stock changes solely to this action. Inventory re-reads when
+the refreshed detail remounts its stock reference.
+
+## F11 quality inspection and pickup integration (2026-10-10)
+
+F11 uses the existing B09 reads/actions and introduces no endpoint, DTO field,
+database migration or RLS/write-grant change. QC desk separates the existing
+unclaimed qc-queue read from `bookings?status=QC_IN_PROGRESS&assignee=mine` for the
+inspector's own claims. Client projections also verify shop, expected status and
+claim identity before displaying work. QC detail is limited to unclaimed
+QC_PENDING or this actor's QC_IN_PROGRESS; unrelated states/claims are suppressed.
+
+CLAIM_QC requires explicit confirmation. Only the claimant with a matching single
+open QC run can record a decision. A checklist starts with no result selected;
+the inspector enters check names and explicitly records passed/failed results.
+These operator-named boolean keys use the existing JSON checklist contract rather
+than an invented universal check rubric. The UI accepts 1–50 distinct names up to
+80 characters, caps notes/title/description using existing bounds and the request
+size limit, and requires every recorded check to pass before exposing a valid
+PASS_QC intent. FAIL_QC requires written issue title/description. Fields are tied
+to the open run ID; a changed run requires a fresh checklist. There is no default
+pass, owner QC override, direct status change or skip-QC action.
+
+The existing COMPLETE_REPAIR resubmission resolves open issues and queues another
+run. QC decision acknowledgements return the inspector to the quality desk instead
+of refetching a detail they no longer have permission to read. Read-only QC records
+show actual run outcome/checklist/notes/timestamps and open/resolved issues for
+authorized roles. Technician issue feedback remains in its rework panel, without
+duplicating the same issue in the adjacent history view.
+
+OWNER/SA can NOTIFY_READY at READY_FOR_PICKUP; actual NOTIFY_READY history suppresses
+repeat notice buttons after refresh/reload. The owning customer or OWNER/SA can
+COMPLETE_PICKUP only at READY_FOR_PICKUP, with terminal-action confirmation.
+Completion/stock/timestamps always come from authoritative reads, with no payment
+collection. Other roles, pre-QC stages and terminal bookings have no pickup action.
+All F11 mutations retain the shared immutable version/key dialog, pending lock and
+uncertain-result retry behavior. Loss of a QC decision response can be followed by
+404 on replay because the inspector has lost visibility; the safe recovery is to
+return to the desk, not infer an unverified success or weaken access guards.
+
+### F11 claim-response resolution
+
+On 2026-10-10 the user authorized the agent to choose the best F11 resolution.
+Preserve B09's existing P0002/HTTP 404 once another inspector's claim hides the
+job; retain HTTP 409 for stale visible requests. This explicitly amends the
+blueprint/docs03 409-only expectation. The UI handles both with generic changed/
+unavailable queue-refresh guidance, without revealing the other inspector's job.
+No error translation, SQL change or RLS weakening is needed; native B09 tests
+and the already verified F11 UI remain unchanged.
+
+## F12 notifications and accessible application states (2026-10-10)
+
+F12 adds no endpoint/schema/RLS change. The bell uses existing GET /me and
+GET /notifications?unread=false|true&limit=20 with verified recipient checks.
+Staff/owner server identity is an additional expected-user constraint; customer
+layout resolves identity client-side so server deep-link sign-in guards remain
+unchanged. Unexpected account/recipient responses suppress the entire feed/count.
+
+Visible tabs poll every 25 seconds and refetch on focus. Hidden tabs skip polling;
+effect cleanup aborts reads/removes listeners and timers. Background refresh keeps
+the last successful count/list in place; auth/read errors suppress stale data.
+Recipient identity is rechecked before each feed read. Lists are the existing
+latest-20 prefix, with an unread filter; no invented pagination or older-page API.
+Every returned notification type/title/message is shown, without hardcoded type
+filters. Booking links derive from actual active memberships or the personal
+booking route, never notification text or untrusted arbitrary URLs.
+
+POST /notifications/[id]/read remains the idempotent B10 read marker. Pending locks
+prevent duplicate clicks; the response must match notification/recipient and have
+a readAt timestamp. Counts/read badges change only after a fresh GET, not through
+local subtraction. Unknown/network/5xx responses offer safe refresh/retry; read
+markers can be repeated without duplicating business effects. A shared browser
+event refreshes the customer summary after a marker; the summary uses the same
+recipient-checked polling hook and displays at most three unread entries.
+
+The bell is a native labelled modal with conservative focus, Escape dismissal,
+focus restoration, explicit All / Unread filters and safe 401/403/network states.
+It appears in customer, owner overview and staff shells. Mobile navigation does
+not trap keyboard events from an open modal. Scrollable table regions have labels,
+Tab focus and visible narrow-screen guidance; confirmation dialogs have bounded
+height and internal scroll. Form error text is associated with auth fields and
+customer errors no longer introduce nested main landmarks. Success copy no longer
+keeps saying "loading" after a completed refresh. No credentials, read-marker
+optimism, payment reporting or production mock notification is introduced.
+
+## I01 Contract Sync and Real Data Cutover (2026-10-10)
+
+All production public, customer, owner, advisor, technician, parts and QC reads
+use typed clients under `frontend/src/lib/api`. Components do not carry alternate
+endpoint spellings or response schemas. Public catalog reads use `shops.ts`;
+booking identity/create/detail use `booking.ts`; owner management uses `owner.ts`;
+workflow mutations and scoped assignment choices use `job-actions.ts`; notification
+reads/markers use `notifications.ts`; and authenticated booking queues, QC queue,
+inventory and estimate catalog reads use `workspace.ts`.
+
+The canonical action endpoint remains
+`POST /api/v1/bookings/[id]/actions` with exactly these discriminators:
+`CONFIRM_BOOKING`, `ASSIGN_TECHNICIAN`, `START_INSPECTION`, `CANCEL_BOOKING`,
+`SUBMIT_ESTIMATE`, `SEND_ESTIMATE`, `APPROVE_ESTIMATE`, `REJECT_ESTIMATE`,
+`REVISE_ESTIMATE`, `ASSIGN_PARTS`, `MARK_PARTS_READY`, `ORDER_PARTS`,
+`RECEIVE_PARTS`, `ALLOCATE_PARTS`, `COMPLETE_REPAIR`, `CLAIM_QC`, `PASS_QC`,
+`FAIL_QC`, `NOTIFY_READY`, and `COMPLETE_PICKUP`. The three B08 convenience
+routes for purchase order creation, receipt and allocation delegate to the same
+guarded action service and use the same action names; they are not alternate
+state machines.
+
+Production source contains no mock record arrays, demo identities or hardcoded
+success fallback records. Display-only constants such as status copy and QC check
+labels are not records and never replace failed API data. API failures remain
+explicit error states. Database snake_case is translated to camelCase only in
+server query/service mapping before shared output schemas validate the response.

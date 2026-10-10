@@ -7,6 +7,30 @@ foundation RLS and seed data in B01. B02 verified these policies through real
 Cloud Auth/REST without requiring schema changes; see the
 [B02 security audit](../backend/docs/b02-security-verification.md).
 
+## I02 Tenant and Role Attack Rehearsal
+
+I02 reran the complete Cloud isolation matrix after the F08 catalog migration,
+using 16 real disposable Auth identities across three isolated fixture shops.
+Foreign shop/customer reads returned no rows or safe 403/404 responses; unassigned,
+inactive and wrong-role staff could not read protected jobs or children. User
+metadata could not forge membership. Direct authenticated REST writes to all 18
+application tables were denied, including attempted booking status, inventory and
+estimate changes, and verified snapshots remained unchanged afterward.
+
+Route Handler attacks also denied unauthenticated actions, foreign customer
+approval, wrong-role/stale/wrong-state transitions, unassigned technician reads,
+foreign-shop advisor reads and non-claiming QC decisions. Strict action parsing
+rejected fabricated `nextStatus`, `role` and `shopId` fields before workflow code;
+the target booking's status, version and history remained unchanged. Authorized
+booking, estimate, parts, repair and QC counterparts still passed. No migration,
+RLS policy, grant or application authorization code changed in I02.
+
+The Cloud RLS audit now recognizes the already-approved
+`20261010110000_f08_estimate_catalog.sql` migration and its guarded private
+`list_estimate_catalog_impl` helper in the exact migration/function allowlists.
+This is a test-contract correction to the applied schema, not a privilege change.
+See [I02 verification](verification/i02/README.md).
+
 ## Global Rules
 
 - All primary keys are UUID unless explicitly justified later.
@@ -241,3 +265,19 @@ OWNER/SA users can send the same-state ready-for-pickup notice from
 `READY_FOR_PICKUP`; it is idempotent through the existing action receipt and does
 not increment `state_version`. The owning customer or OWNER/SA can complete pickup,
 which sets `COMPLETED` and `completed_at`.
+
+## F08 Minimal Estimate Catalog Read
+
+The user approved a booking-scoped technician catalog read. Forward migration
+`20261010110000_f08_estimate_catalog.sql` adds public invoker
+`list_estimate_catalog(input jsonb)` and its guarded private definer, with empty
+search paths and authenticated-only EXECUTE grants. The function derives shop
+from the booking and requires both exact technician assignment and an active
+TECHNICIAN membership in that shop. It returns active part IDs, SKU and name only,
+with deterministic 50-row pages and a total. Zero-stock items remain choices.
+No costs, stock writes, policy changes, tables or columns are added; direct
+inventory reads remain OWNER/PARTS only. Existing RLS-protected profile/vehicle
+reads assemble nullable booking context after the get_booking guard succeeds.
+Native tests verify role/tenant/revocation denial, spoofed inputs, zero stock,
+paging and narrow function privileges. Cloud application is pending; see
+[F08 database verification](../backend/docs/f08-estimate-catalog-verification.md).

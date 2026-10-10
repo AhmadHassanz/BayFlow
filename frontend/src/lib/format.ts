@@ -2,6 +2,10 @@ export function moneyPkr(amount: number) {
   return `PKR ${new Intl.NumberFormat('en-PK', { maximumFractionDigits: 0 }).format(amount)}`;
 }
 
+export function recordDate(value: string) {
+  return new Intl.DateTimeFormat('en-PK', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Karachi' }).format(new Date(value));
+}
+
 export function localDate(timezone: string, now = new Date()) {
   return new Intl.DateTimeFormat('en-CA', { timeZone: timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
 }

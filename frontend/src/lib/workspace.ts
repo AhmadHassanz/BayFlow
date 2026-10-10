@@ -20,4 +20,4 @@ export function identityHome(identity: BookingIdentity) {
   if (memberships.some(item => item.role === 'OWNER')) return '/owner';
   return memberships[0] ? membershipHome(memberships[0]) : '/customer';
 }
-export function canUseWorkspace(role: Membership['role'], segment: string) { return roleSegments[role] === segment; }
+export function canUseWorkspace(role: Membership['role'], segment: string) { return roleSegments[role] === segment || (role === 'OWNER' && segment === 'settings'); }

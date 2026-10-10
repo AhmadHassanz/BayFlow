@@ -62,7 +62,7 @@ Do not change these status names without explicit approval. Do not add `CHECKED_
 - Parts receipt updates `quantity_received` and `quantity_on_hand` in one transaction.
 - Parts allocation validates per-part quantity, decrements stock once, writes allocations, and moves to `IN_REPAIR`.
 - Cancellation is allowed only strictly before first `IN_REPAIR`.
-- QC claim locks booking and only succeeds if unclaimed `QC_PENDING`; competing QC gets HTTP 409.
+- QC claim locks booking and only succeeds if unclaimed `QC_PENDING`. A stale visible request gets HTTP 409; once another inspector claims it, the losing actor's now-hidden job returns HTTP 404. The UI handles both with quality-desk refresh guidance (user-authorized F11 resolution, 2026-10-10).
 - QC failure creates linked issue before transition back to `IN_REPAIR`.
 - Booking history is inserted atomically with each status change.
 - Same-state operations such as ready notification and receiving parts have audit entries or event records.
@@ -161,6 +161,28 @@ open issues for that booking and queues it for another QC claim. QC pass moves
 to `READY_FOR_PICKUP`; OWNER/SA ready notification is same-state and idempotent;
 customer or OWNER/SA pickup completion moves to terminal `COMPLETED` and sets
 `completed_at`. No new status is introduced.
+
+## I03 Race and Edge Case Rehearsal
+
+I03 verifies state transitions under actual concurrent PostgreSQL transactions,
+not sequential requests or UI timing. Slot creation locks capacity so eight
+parallel customers against capacity two produce exactly two bookings and six
+conflicts. Same-key booking retries produce one complete operation. Competing
+parts allocations serialize on stock; the loser receives `STOCK_CONFLICT` with
+no allocation or deduction.
+
+Parallel duplicate estimate approval and receipt requests reuse one idempotency
+key. Both callers receive authoritative results, exactly one is a replay, and the
+database contains one action receipt/history event; approval occurs once and stock
+is added once. Two QC inspectors claiming the same queued booking produce exactly
+one claimant and one open QC run. The losing claim is safely hidden with 404 or,
+when still visible but stale, rejected with 409 according to the F11 amendment.
+
+A live two-session stale-tab rehearsal confirms the HTTP/UI boundary: one advisor
+confirmation commits with 201, the competing stale request receives 409
+`STATE_CONFLICT`, and the losing dialog directs the user to reload. Reload shows
+the authoritative status, one state-version increment and one history event. No
+sleep-based coordination or UI-only lock is treated as a database invariant.
 
 
 

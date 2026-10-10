@@ -71,6 +71,7 @@ test('private helper execution and search paths match the audited allowlist',asy
   const b08=versions.some(row=>row.version==='20261009180000');
   const b09=versions.some(row=>row.version==='20261009190000');
   const b10=versions.some(row=>row.version==='20261010100000');
+  const f08=versions.some(row=>row.version==='20261010110000');
   const allowed=['has_shop_role','can_read_booking','can_read_estimate','can_read_profile','can_read_vehicle','can_read_notification',
     ...(b03?['sync_profile_impl','add_staff_membership_impl','edit_staff_membership_impl']:[]),
     ...(b04?['save_shop_impl','save_service_impl']:[]),
@@ -78,12 +79,13 @@ test('private helper execution and search paths match the audited allowlist',asy
     ...(b06?['apply_booking_action_impl']:[]),
     ...(b08?['save_inventory_part_impl','list_inventory_impl']:[]),
     ...(b09?['list_qc_queue_impl']:[]),
-    ...(b10?['mark_notification_read_impl']:[])];
+    ...(b10?['mark_notification_read_impl']:[]),
+    ...(f08?['list_estimate_catalog_impl']:[])];
   const rows=await cloud.query(`select p.proname,p.prosecdef,p.proconfig,
     has_function_privilege('anon',p.oid,'EXECUTE') as anon_execute,
     has_function_privilege('authenticated',p.oid,'EXECUTE') as user_execute
     from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='private'`);
-  assert.equal(rows.length,(b03?14:10)+(b04?5:0)+(b05?2:0)+(b06?6:0)+(b07?2:0)+(b08?9:0)+(b09?4:0)+(b10?2:0));
+  assert.equal(rows.length,(b03?14:10)+(b04?5:0)+(b05?2:0)+(b06?6:0)+(b07?2:0)+(b08?9:0)+(b09?4:0)+(b10?2:0)+(f08?1:0));
   for(const row of rows) {
     assert.ok(row.proconfig?.includes('search_path=""'),row.proname);
     assert.equal(row.anon_execute,false,row.proname);
@@ -266,6 +268,7 @@ test('fixture tenant isolation is backed by matching-shop foreign keys',async()=
   if(versions.some(row=>row.version==='20261009190000')) expected.push('20261009190000');
   if(versions.some(row=>row.version==='20261009190100')) expected.push('20261009190100');
   if(versions.some(row=>row.version==='20261010100000')) expected.push('20261010100000');
+  if(versions.some(row=>row.version==='20261010110000')) expected.push('20261010110000');
   assert.deepEqual(versions.map(row=>row.version),expected);
 });
 

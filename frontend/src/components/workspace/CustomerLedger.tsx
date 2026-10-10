@@ -1,16 +1,18 @@
 'use client';
 import Link from 'next/link';
 import { useState } from 'react';
-import { getCustomerBookings, getNotificationSummary } from '@/lib/api/workspace';
+import { getCustomerBookings } from '@/lib/api/workspace';
+import { useNotificationFeed } from '@/lib/use-notification-feed';
+import { notificationDestination } from '@/lib/api/notifications';
 import { useRemoteResource } from '@/lib/use-remote-resource';
 import { isClosed } from '@/lib/booking/status';
 import { LoadingSkeleton, EmptyState } from '@/components/shared/feedback';
 import { AccessFeedback } from './AccessFeedback';
 import { StatusChip, recordDate } from './BookingRecord';
 
-export function NotificationSummary() {
-  const { state, retry } = useRemoteResource(getNotificationSummary, undefined, true);
-  return <aside className="notification-summary"><p className="eyebrow">Workshop updates</p>{state.kind === 'loading' ? <LoadingSkeleton label="Loading updates…" /> : state.kind === 'error' ? <AccessFeedback error={state.error} retry={retry} returnTo="/customer" /> : <><h2>{state.data.unreadCount} unread</h2>{state.data.items.length ? <ul>{state.data.items.map(item => <li key={item.id}><strong>{item.title}</strong><p>{item.message}</p>{item.bookingId && <Link className="text-button" href={`/customer/bookings/${item.bookingId}`}>View booking ↗</Link>}</li>)}</ul> : <p>You’re up to date. New workshop updates will appear here.</p>}</>}</aside>;
+export function NotificationSummary({ customerId }: { customerId?: string }) {
+  const { data, loading, error, refresh } = useNotificationFeed(customerId, true);
+  return <aside className="notification-summary"><p className="eyebrow">Workshop updates</p>{loading ? <LoadingSkeleton label="Loading updates…" /> : error ? <AccessFeedback error={error} retry={refresh} returnTo="/customer" /> : data && <><h2>{data.unreadCount} unread</h2>{data.items.length ? <ul>{data.items.slice(0, 3).map(item => { const destination = notificationDestination(item, data.memberships); return <li key={item.id}><strong>{item.title}</strong><p>{item.message}</p>{destination && <Link className="text-button" href={destination}>View booking ↗</Link>}</li>; })}</ul> : <p>You’re up to date. New workshop updates will appear here.</p>}<p className="fine-print">Use the notification bell to inspect updates and mark them read.</p></>}</aside>;
 }
 export function CustomerLedger({ customerId }: { customerId: string }) {
   const { state, retry } = useRemoteResource(getCustomerBookings, undefined, true);

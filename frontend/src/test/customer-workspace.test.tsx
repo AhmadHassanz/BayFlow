@@ -70,10 +70,11 @@ it('sorts API history chronologically, preserves notes and shows the actual esti
   expect(screen.queryByRole('button', { name: /approve/i })).toBeNull();
 });
 it('renders unread summary from the existing API', async () => {
-  vi.stubGlobal('fetch', vi.fn().mockImplementation(async () => ok({ items: [], limit: 3, unreadCount: 0 })));
+  vi.stubGlobal('fetch', vi.fn().mockImplementation(async (url: string) => url === '/api/v1/me'
+    ? ok({ user: { id: customerId, fullName: 'Customer', phone: null, email: null }, memberships: [] }) : ok({ items: [], limit: 20, unreadCount: 0 })));
   render(<NotificationSummary />);
   await screen.findByText('0 unread');
-  expect(fetch).toHaveBeenCalledWith('/api/v1/notifications?unread=true&limit=3', expect.objectContaining({ credentials: 'same-origin', cache: 'no-store' }));
+  expect(fetch).toHaveBeenCalledWith('/api/v1/notifications?unread=true&limit=20', expect.objectContaining({ credentials: 'same-origin', cache: 'no-store' }));
 });
 it('signs in through the existing action and preserves the return destination', async () => {
   mocks.login.mockResolvedValue({ data: { signedIn: true }, error: null });
