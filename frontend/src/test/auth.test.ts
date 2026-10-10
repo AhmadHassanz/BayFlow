@@ -58,6 +58,13 @@ it('signup refuses role metadata and duplicate-email obfuscated identities', asy
   client.auth.signUp.mockResolvedValue({ data: { user: { identities: [] }, session: null }, error: null });
   expect((await signup({ fullName: 'Name', email: authUser.email, password })).error).toContain('sign in');
 });
+it('explains project email throttling without claiming a new email is registered', async () => {
+  const client = setup();
+  client.auth.signUp.mockResolvedValue({ data: { user: null, session: null }, error: { code: 'over_email_send_rate_limit', status: 429 } } as never);
+  const result = await signup({ fullName: 'Name', email: 'unused@gmail.com', password });
+  expect(result.error).toContain('confirmation email limit');
+  expect(result.error).not.toContain('registered');
+});
 
 it('signup preserves a safe booking return path in email confirmation without permitting an external redirect', async () => {
   const client = setup();

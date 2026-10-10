@@ -23,6 +23,10 @@ export async function signup(input: unknown, next?: string) {
   if (next) callback.searchParams.set('next', safeNext(next));
   const { data, error } = await client.auth.signUp({ email: value.data.email, password: value.data.password,
     options: { data: { full_name: value.data.fullName }, emailRedirectTo: callback.toString() } });
+  if (error?.code === 'over_email_send_rate_limit' || error?.status === 429)
+    return { error: 'The confirmation email limit has been reached. Wait a while, then try again, or configure a production SMTP provider.' };
+  if (error?.code === 'email_address_invalid')
+    return { error: 'The email provider rejected this address. Check it and try again.' };
   if (error || (data.user?.identities && data.user.identities.length === 0))
     return { error: 'Unable to create an account. If this email is registered, sign in.' };
   if (data.session) await syncProfile(client);

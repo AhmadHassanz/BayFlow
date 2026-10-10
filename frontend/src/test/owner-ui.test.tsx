@@ -67,6 +67,18 @@ it('edits hours with split windows, rejects overlaps and explains schedule confl
   await screen.findByText(/Existing bookings conflict/);
   expect(screen.queryByText('PRIVATE_RESPONSE')).toBeNull();
 });
+it('uses selectable quarter-hour choices and defaults a newly opened day to 9 AM–5 PM', () => {
+  vi.stubGlobal('fetch', vi.fn());
+  render(<ShopForm shop={shop} section="hours" onSaved={vi.fn()} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Add window for Sunday' }));
+  const opens = screen.getByLabelText('Sunday window 1 opens') as HTMLSelectElement;
+  const closes = screen.getByLabelText('Sunday window 1 closes') as HTMLSelectElement;
+  expect(opens.tagName).toBe('SELECT'); expect(closes.tagName).toBe('SELECT');
+  expect(opens.value).toBe('09:00'); expect(closes.value).toBe('17:00');
+  expect(opens.selectedOptions[0].textContent).toBe('9:00 AM');
+  expect(closes.selectedOptions[0].textContent).toBe('5:00 PM');
+  expect(opens.options).toHaveLength(96);
+});
 it('switches the owner sections and loads inactive services through the private scope', async () => {
   const fetcher = vi.fn().mockImplementation(async (url: string) => url.includes('/services?') ? ok({ items: [service], page: 1, pageSize: 50, total: 1 }) : ok({ shop, counts }));
   vi.stubGlobal('fetch', fetcher);
@@ -106,8 +118,9 @@ it('shows supplied credentials only after authoritative staff creation and never
   expect((screen.getByLabelText('Initial password') as HTMLInputElement).type).toBe('password');
   expect((screen.getByLabelText('Initial password') as HTMLInputElement).value).toBe('Synthetic-Test-Password!');
   expect(store).not.toHaveBeenCalled(); expect(created).toHaveBeenCalledOnce();
-  fireEvent.click(screen.getByRole('button', { name: 'I’ve saved them securely' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Add another staff account' }));
   expect((screen.getByLabelText('Initial password *') as HTMLInputElement).value).toBe('');
+  expect(screen.getByRole('button', { name: /Create staff account/ })).toBeTruthy();
 });
 it('does not overwrite existing credentials on duplicate email', async () => {
   vi.stubGlobal('fetch', vi.fn().mockImplementation(async () => failure(409, 'EMAIL_EXISTS')));
