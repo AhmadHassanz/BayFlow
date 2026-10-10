@@ -39,10 +39,10 @@ it('callback exchanges the PKCE code, syncs profile and redirects locally', asyn
   expect(response.headers.get('location')).toBe('http://localhost:3000/book/shop?step=4');
   expect(response.headers.get('cache-control')).toContain('no-store');
 });
-it('callback rejects missing/expired codes without a raw provider exception', async () => {
-  expect((await GET(new Request('http://localhost:3000/auth/callback'))).status).toBe(400);
+it('callback redirects missing/expired codes to recoverable confirmation without a raw provider exception', async () => {
+  expect((await GET(new Request('http://localhost:3000/auth/callback?next=%2Fowner%2Fonboarding&error_code=otp_expired'))).headers.get('location')).toBe('http://localhost:3000/login?next=%2Fowner%2Fonboarding&confirmation=expired');
   mocks.server.mockResolvedValue({ auth: { exchangeCodeForSession: vi.fn().mockResolvedValue({ error: { message: 'secret' } }) } });
   const response = await GET(new Request('http://localhost:3000/auth/callback?code=expired'));
-  expect(response.status).toBe(400); expect(await response.text()).not.toContain('secret');
+  expect(response.status).toBe(307); expect(response.headers.get('location')).toBe('http://localhost:3000/login?next=%2Fapi%2Fv1%2Fme&confirmation=expired');
   expect(mocks.sync).not.toHaveBeenCalled();
 });

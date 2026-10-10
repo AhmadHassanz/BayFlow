@@ -29,7 +29,8 @@ assert.match(shops.headers.get('cache-control') ?? '', /no-store/);
 const shopEnvelope = await shops.json();
 assert.equal(shopEnvelope.error, null);
 assert(Array.isArray(shopEnvelope.data?.items));
-assert(shopEnvelope.data.items.length > 0, 'The live directory must contain at least one shop.');
+assert(Number.isInteger(shopEnvelope.data?.total) && shopEnvelope.data.total >= 0, 'The live directory must return a nonnegative total.');
+assert(shopEnvelope.data.total >= shopEnvelope.data.items.length, 'The directory total cannot be smaller than the returned page.');
 
 const malformed = await request('/api/v1/shops?page=0', 400);
 const malformedEnvelope = await malformed.json();

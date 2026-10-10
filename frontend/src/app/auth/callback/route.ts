@@ -3,18 +3,29 @@ import { createClient } from '@/lib/supabase/server';
 import { publicEnvironment } from '@/lib/supabase/env';
 import { safeNext } from '@/lib/auth/redirect';
 import { syncProfile } from '@/lib/auth/session';
-import { ApiError, failure } from '@/lib/api/response';
+import { failure } from '@/lib/api/response';
 
 export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const next = safeNext(url.searchParams.get('next'));
   try {
-    const url = new URL(request.url);
     const code = url.searchParams.get('code');
-    if (!code) throw new ApiError(400, 'AUTH_CALLBACK_FAILED', 'This sign-in link is invalid or expired.');
+    if (!code) {
+      const recovery = new URL('/login', publicEnvironment().siteUrl);
+      recovery.searchParams.set('next', next);
+      recovery.searchParams.set('confirmation', 'expired');
+      return NextResponse.redirect(recovery);
+    }
     const client = await createClient();
     const { error } = await client.auth.exchangeCodeForSession(code);
-    if (error) throw new ApiError(400, 'AUTH_CALLBACK_FAILED', 'This sign-in link is invalid or expired.');
+    if (error) {
+      const recovery = new URL('/login', publicEnvironment().siteUrl);
+      recovery.searchParams.set('next', next);
+      recovery.searchParams.set('confirmation', 'expired');
+      return NextResponse.redirect(recovery);
+    }
     await syncProfile(client);
-    const response = NextResponse.redirect(new URL(safeNext(url.searchParams.get('next')), publicEnvironment().siteUrl));
+    const response = NextResponse.redirect(new URL(next, publicEnvironment().siteUrl));
     response.headers.set('Cache-Control', 'private, no-store');
     return response;
   } catch (error) { return failure(error); }

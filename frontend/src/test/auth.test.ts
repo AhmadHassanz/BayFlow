@@ -5,7 +5,7 @@ const mocks = vi.hoisted(() => ({ client: vi.fn(), headers: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createClient: mocks.client }));
 vi.mock('next/headers', () => ({ headers: mocks.headers }));
 import { requireIdentity, syncProfile } from '@/lib/auth/session';
-import { signup, login, logout } from '@/lib/auth/actions';
+import { signup, login, logout, resendConfirmation } from '@/lib/auth/actions';
 
 const password = 'Test-Password-123!';
 const authUser = { id: 'b0300000-0000-4000-8000-000000000001', email: 'user@example.test' };
@@ -14,6 +14,7 @@ function setup() {
     getUser: vi.fn().mockResolvedValue({ data: { user: authUser }, error: null }),
     signUp: vi.fn().mockResolvedValue({ data: { user: { identities: [{}] }, session: null }, error: null }),
     signInWithPassword: vi.fn().mockResolvedValue({ error: null }),
+    resend: vi.fn().mockResolvedValue({ error: null }),
     signOut: vi.fn().mockResolvedValue({ error: null }),
   };
   const rpc = vi.fn().mockResolvedValue({ data: { id: authUser.id, fullName: 'Name', phone: null }, error: null });
@@ -83,6 +84,11 @@ it('login sets the Supabase cookie session, syncs profile, and returns no token/
   expect(client.auth.signInWithPassword).toHaveBeenCalledWith({ email: authUser.email, password });
   expect(client.rpc).toHaveBeenCalledOnce();
   expect(JSON.stringify(result)).not.toContain(password);
+});
+it('requests a fresh signup confirmation while preserving owner onboarding', async () => {
+  const client = setup();
+  expect(await resendConfirmation({ email: authUser.email }, '/owner/onboarding')).toEqual({ data: { requested: true }, error: null });
+  expect(client.auth.resend).toHaveBeenCalledWith({ type: 'signup', email: authUser.email, options: { emailRedirectTo: 'http://localhost:3000/auth/callback?next=%2Fowner%2Fonboarding' } });
 });
 it('failed login does not sync profiles and hides provider errors', async () => {
   const client = setup(); client.auth.signInWithPassword.mockResolvedValue({ error: { message: 'sensitive provider error' } } as never);

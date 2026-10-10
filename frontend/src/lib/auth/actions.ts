@@ -6,6 +6,7 @@ import { loginInput, signupInput } from '@/lib/contracts/auth';
 import { syncProfile, requireIdentity } from './session';
 import { ApiError } from '@/lib/api/response';
 import { safeNext } from './redirect';
+import { z } from 'zod';
 
 async function sameOrigin() {
   if ((await headers()).get('origin') !== new URL(publicEnvironment().siteUrl).origin)
@@ -36,6 +37,16 @@ export async function login(input: unknown) {
   if (error) return { error: 'Unable to sign in. Check your credentials and email confirmation.' };
   await syncProfile(client);
   return { data: { signedIn: true }, error: null };
+}
+export async function resendConfirmation(input: unknown, next?: string) {
+  await sameOrigin();
+  const parsed = z.object({ email: z.email().max(254) }).safeParse(input);
+  if (!parsed.success) return { error: 'Enter the email address used for this account.' };
+  const callback = new URL('/auth/callback', publicEnvironment().siteUrl);
+  if (next) callback.searchParams.set('next', safeNext(next));
+  const client = await createClient();
+  await client.auth.resend({ type: 'signup', email: parsed.data.email, options: { emailRedirectTo: callback.toString() } });
+  return { data: { requested: true }, error: null };
 }
 export async function logout() {
   await sameOrigin();

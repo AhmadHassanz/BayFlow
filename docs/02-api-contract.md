@@ -200,7 +200,10 @@ membership attachment succeeds and activation is confirmed.
 
 `/auth/callback?code=...&next=...` exchanges a PKCE code, synchronizes the profile,
 and redirects only to a local path, defaulting to `/api/v1/me` while UI is absent.
-Invalid/expired links return 400. Public signup accepts only name/email/password;
+Invalid, consumed, or expired links redirect to the login recovery view with the
+sanitized local destination preserved. The recovery form may call the signup
+confirmation resend Server Action; its response is deliberately generic to avoid
+revealing whether an email is registered. Public signup accepts only name/email/password;
 it never establishes a shop role. Shop creation remains B04.
 
 ### MT01 account intent and onboarding amendment
