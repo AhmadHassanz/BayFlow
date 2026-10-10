@@ -66,6 +66,7 @@ accepts credentials and performs no database writes.
 
 | Method + route | Inputs / output | Authorization |
 | --- | --- | --- |
+| `GET /api/v1/health` | `{ status: "ok" }` after a bounded public database query | Public |
 | `GET /api/v1/shops` | `?city=&q=&page=`; public-safe shops | Public |
 | `GET /api/v1/shops/by-slug/[slug]` | Public shop by slug; services/hours | Public |
 | `GET /api/v1/shops/[shopId]` | Public shop/services/hours | Public |

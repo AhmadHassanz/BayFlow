@@ -28,6 +28,57 @@ The disposable demonstration identities are:
 Their shared private password is intentionally not stored in Git or this README.
 Use the privately retained B11 demo credential when presenting the judge script.
 
+## Six minute judge script
+
+1. Open the live homepage in a private window, show the real workshop directory,
+   choose Lahore Auto Care and create a symptom-only booking as Customer A.
+2. Sign in as the service advisor in a second private context, confirm the visit
+   and assign Technician A.
+3. As Technician A, start inspection and submit an itemized estimate with real
+   catalog parts and labour.
+4. As the advisor, review and send it. As Customer A, decline it once. Revise and
+   resend as the advisor, then approve it as the customer.
+5. Assign Parts A, create an order for the shortage, receive it in two deliveries,
+   allocate stock and release the vehicle to repair.
+6. Complete repair as Technician A. Claim and fail QC as QC A, record the issue,
+   repair and resubmit as Technician A, then claim and pass the second inspection.
+7. Notify ready as the advisor and confirm pickup as Customer A. Reload the final
+   record and show `COMPLETED`, both estimate revisions, the QC failure/pass loop
+   and immutable timeline.
+8. If time allows, show a foreign customer or foreign-shop URL returning an
+   unavailable response without exposing data.
+
+Prepare the six disposable accounts in separate private contexts before judging.
+If the venue network fails, use the retained I04 screenshots only as supporting
+evidence and state clearly that they are a recording of a previously successful
+live run, not a substitute for a functioning deployment.
+
+## Security and transaction guarantees
+
+- Supabase RLS scopes customers and active shop memberships to authorized records.
+- Ordinary authenticated users cannot directly update workflow state, stock,
+  history, estimates, QC records or notifications.
+- Transactional PostgreSQL functions lock and recheck actor, tenant, assignment,
+  state version and idempotency keys before committing multi-row actions.
+- Estimate revisions and booking history remain immutable audit records.
+- Public responses use safe projections; API errors return stable messages and an
+  opaque request ID rather than raw database exceptions or stack traces.
+- Admin keys remain server-only and are used only for guarded staff provisioning.
+
+## Known limitations
+
+- Notifications show the latest 20 records and use polling/focus refresh rather
+  than realtime delivery.
+- Rate limiting is process-local and is not a distributed abuse-control service.
+- Staff account creation requires one privately configured server-only Supabase
+  admin key.
+- Email delivery depends on Supabase Auth configuration; the core demo uses
+  pre-provisioned disposable accounts.
+- No payment gateway, invoice PDF, SMS, voice agent, public reviews or mandatory
+  customer image upload is included.
+- Chromium is the automated browser gate. Safari and Firefox remain manual smoke
+  options.
+
 ## Repository layout
 
 ```text

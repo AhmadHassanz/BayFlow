@@ -2,10 +2,9 @@
 
 ## Status
 
-B12 is **BLOCKED only on deploying the completed local hardening**. The public
-site remains healthy on commit `6daef42`, but it does not yet contain B12's request
-correlation or security headers. B12 cannot pass until Vercel serves this source
-and the hardened production smoke succeeds.
+B12 is **PASSED**. Commit `14a8622` is deployed at
+`https://bay-flow-delta.vercel.app`, and the hardened production smoke confirms
+that the live site serves B12's request correlation and security headers.
 
 ## Plan
 
@@ -63,39 +62,40 @@ availability/envelope checks: HTTPS landing, public directory, safe invalid inpu
 and unauthenticated private route.
 
 After adding the B12 header and correlation assertions, the same production URL
-correctly failed because the live deployment still points at pre-B12 commit
-`6daef42`; `X-Content-Type-Options` was absent. This is the expected deployment
-blocker, not a local build or Cloud schema failure.
+first failed while Vercel still served pre-B12 commit `6daef42` because
+`X-Content-Type-Options` was absent. After the user committed, pushed and
+redeployed commit `14a8622`, the exact hardened smoke command passed **4/4**.
 
-## Required Unblock
+The live check now confirms:
 
-1. Review and commit the current I04 and B12 changes.
-2. Push the deployment branch to GitHub.
-3. Wait for the Vercel production deployment to report Ready.
-4. Run from `frontend/`:
+- HTTPS landing content;
+- public directory success envelope and no-store behavior;
+- safe invalid-query response with matching UUID in `error.details.requestId` and
+  `X-Request-Id`;
+- safe unauthenticated private-route response;
+- `nosniff`, frame denial, strict-origin referrer policy and disabled
+  camera/microphone/geolocation permissions.
+
+Final command:
 
 ```powershell
 $env:BAYFLOW_PRODUCTION_URL='https://bay-flow-delta.vercel.app'
 npm run test:smoke:production
 ```
 
-5. Confirm the command reports four passed checks.
-6. Inspect Vercel runtime logs using a returned request ID and confirm only its
-   status/code metadata appears, with no raw exception or secret.
-
-Then update B12 to PASSED. Do not start R00 before this deployment gate succeeds.
+Output: `{"origin":"https://bay-flow-delta.vercel.app","checks":4,"status":"passed"}`.
 
 ## Risks and Limitations
 
-- Local success does not prove that Vercel is serving the new headers and error
-  contract; the hardened smoke deliberately prevents that false claim.
-- Vercel runtime-log inspection requires the user's Vercel project access.
+- The agent did not have direct access to the Vercel runtime-log interface. Live
+  correlation behavior is verified, while an operator should still search a
+  returned request ID in Vercel logs during release rehearsal.
 - Existing development-tool advisories remain unchanged; no last-minute dependency
   upgrade was attempted.
 - Cloud fixtures and the I04 QA records remain retained/deactivated as documented.
-- No Cloud reset, reseed, migration application, generated-type rewrite, commit,
-  push or deployment occurred during B12 implementation.
+- No Cloud reset, reseed, migration application or generated-type rewrite occurred.
+  The user committed, pushed and redeployed B12 as commit `14a8622`.
 
 ## Next Phase
 
-B12 remains the active blocked phase. R00 is next only after B12 passes.
+R00 is the exact next phase. It was not started here.

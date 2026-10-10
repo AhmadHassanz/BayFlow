@@ -21,6 +21,9 @@ assert.equal(home.headers.get('referrer-policy'), 'strict-origin-when-cross-orig
 assert.equal(home.headers.get('permissions-policy'), 'camera=(), microphone=(), geolocation=()');
 assert.match(await home.text(), /BayFlow/);
 
+const health = await request('/api/v1/health', 200);
+assert.deepEqual(await health.json(), { data: { status: 'ok' }, error: null });
+
 const shops = await request('/api/v1/shops?page=1', 200);
 assert.match(shops.headers.get('cache-control') ?? '', /no-store/);
 const shopEnvelope = await shops.json();
@@ -42,4 +45,4 @@ const unauthenticatedEnvelope = await unauthenticated.json();
 assert.equal(unauthenticatedEnvelope.data, null);
 assert.equal(unauthenticatedEnvelope.error?.code, 'UNAUTHENTICATED');
 
-console.log(JSON.stringify({ origin: origin.origin, checks: 4, status: 'passed' }));
+console.log(JSON.stringify({ origin: origin.origin, checks: 5, status: 'passed' }));
