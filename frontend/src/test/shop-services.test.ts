@@ -45,7 +45,7 @@ it('slot queries use shop local date and return aggregate-only camelCase DTOs', 
     await expect(listSlots(id,'2026-10-24')).rejects.toMatchObject({ code: 'DATE_OUT_OF_RANGE' });
   } finally { vi.useRealTimers(); }
 });
-it.each([['42501',403],['P0002',404],['22023',400],['23514',409],['unknown',500]])
+it.each([['42501',403],['P0002',404],['22023',400],['23514',409],['BF001',409],['unknown',500]])
   ('catalog database error %s becomes a safe %i', (code,status) => {
     expect(() => catalogError({ code })).toThrow(expect.objectContaining({ status }));
   });

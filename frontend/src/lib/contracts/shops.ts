@@ -16,7 +16,7 @@ const shopFields = z.object({ name: z.string().trim().min(1).max(120), city: z.s
   slotCapacity: z.number().int().min(1).max(100), active: z.boolean() }).strict();
 export const createShopInput = shopFields.omit({ active: true }).extend({
   timezone: timezone.default('Asia/Karachi'), slotDurationMinutes: shopFields.shape.slotDurationMinutes.default(60),
-  slotCapacity: shopFields.shape.slotCapacity.default(1), active: z.boolean().default(true),
+  slotCapacity: shopFields.shape.slotCapacity.default(1), active: z.boolean().default(false),
 });
 export const editShopInput = shopFields.partial().refine(value => Object.keys(value).length > 0, 'Provide settings.');
 const serviceFields = z.object({ name: z.string().trim().min(1).max(120), description: z.string().max(2000),

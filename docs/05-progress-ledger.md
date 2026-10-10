@@ -6,7 +6,7 @@ This ledger tracks phase status, verification, migration IDs, and open issues. U
 
 | Field | Recorded value |
 | --- | --- |
-| Phase | `S00`, `B00`-`B12`, `F00`-`F13`, `I01`-`I04`, `R00` |
+| Phase | `S00`, `B00`-`B12`, `F00`-`F13`, `I01`-`I04`, `R00`, `MT01`-`MT06` |
 | State | `NOT_STARTED`, `IN_PROGRESS`, `BLOCKED`, `PASSED` |
 | Git SHA + timestamp | Checkpoint commit and decision record |
 | Database migration IDs | Applied migration filenames and remote status |
@@ -25,6 +25,7 @@ This ledger tracks phase status, verification, migration IDs, and open issues. U
 | Procurement | `B08 -> F10` | Order, partial receipt, allocation changes stock |
 | Quality | `B09 -> F11` | QC fail -> mechanic repair -> QC pass -> pickup |
 | Finish | `B10 -> F12 -> B11 -> F13 -> I01-I04 -> B12 -> R00` | Audit, notifications, tests, deploy, judge demo |
+| Multi-tenant onboarding correction | `MT01 -> MT02 -> MT03 -> MT04 -> MT05 -> MT06` | Owner-led production onboarding, deterministic role routing, fixture isolation, full acceptance |
 
 ## Phase Status
 
@@ -63,6 +64,12 @@ This ledger tracks phase status, verification, migration IDs, and open issues. U
 | I03 | PASSED | Working-tree checkpoint, 2026-10-10 Asia/Karachi; base 97b2054 | No migration/RLS/grant/state change; Cloud schema unchanged | Native PostgreSQL 144/144 including parallel approval/receipt/QC plus capacity/stock races; Cloud booking 9/9; live two-session stale-tab 201/409 recovery 1/1; frontend 364/364; both typechecks/lint/build; see docs/verification/i03/README.md | One retained I01 QA booking advanced PENDING -> CONFIRMED; marked Cloud fixtures deactivated/hidden; no deployment; I04 next |
 | I04 | PASSED | Public deployment checkpoint 6daef42, 2026-10-10 Asia/Karachi | No migration/RLS/grant change; existing B11 Cloud data only | Vercel HTTP 200; public six-role full journey 1/1 in 3.1m; public mobile role/isolation gate 1/1 in 1.0m; 364/364 frontend tests; both typechecks/lint/build; screenshots visually inspected; see docs/verification/i04/README.md | One first-attempt QA booking retained at READY_FOR_PICKUP after the original 180s harness timeout; one completed I04 booking retained; deployment at bay-flow-delta.vercel.app; B12 next |
 | R00 | PASSED | 03539b5, 2026-10-10 Asia/Karachi; deployed to bay-flow-delta.vercel.app | No migration/RLS/grant change; B12 Cloud parity remains verified | Production smoke 5/5 including Supabase-backed health; local health 2/2; frontend 368/368; typecheck/lint/build with 16/16 pages; A01-A21 evidence mapped; repository audit clean; see docs/verification/r00/README.md | Release ready; final PASSED evidence update remains local until the user commits it |
+| MT01 | PASSED | Working-tree contract checkpoint, 2026-10-10 Asia/Karachi | None; contract-only phase | Contract diff and cross-reference checks; no runtime, schema, Cloud, fixture, or dependency change | MT02 must implement account intent and redirect correction before owner onboarding UI |
+| MT02 | PASSED | Working-tree implementation checkpoint, 2026-10-10 Asia/Karachi | None; auth navigation only | Focused auth/workspace 40/40; full frontend 372/372; typecheck, lint, production build and diff check exit 0; build includes `/owner/onboarding` | Owner onboarding currently hands off to existing shop creation; guided details/hours/services/team launch flow and DB publication guard remain MT03 |
+| MT03 | PASSED | Working-tree implementation checkpoint, 2026-10-10 Asia/Karachi | 20261010130000 native verified; Cloud not applied | Disposable PostgreSQL 145/145; frontend 373/373; affected timeout files 34/34 isolated; typecheck, lint, production build and diff check exit 0 | Cloud migration/application acceptance pending explicit approval; staff provisioning needs configured server admin secret; production fixture cleanup remains MT05 |
+| MT04 | PASSED | Working-tree implementation checkpoint, 2026-10-10 Asia/Karachi | None; frontend routing only | Focused routing/workspace 41/41; full frontend 377/377; typecheck, lint, production build and diff check exit 0; build includes `/workspace` | Live owner-created employee login requires MT03 Cloud acceptance and configured server admin secret; fixture cleanup remains MT05 |
+| MT05 | PASSED | Cloud cleanup checkpoint, 2026-10-10 Asia/Karachi | No migration; exact marked fixture deletion only | Exact-project dry-run found 3 shops/16 marked users, zero collisions and zero external dependencies; cleanup returned 0 remaining fixture rows; repeated dry-run all zero; live directory 0 items | Cleanup is not a general-purpose shop deletion tool; ignored local demo credential file remains local |
+| MT06 | PASSED | Local/Cloud acceptance checkpoint, 2026-10-10 Asia/Karachi | 20261010130000 Cloud applied; all 17 migrations aligned | Native PostgreSQL 148/148; frontend 377/377; both typechecks, lint, build and Cloud schema lint passed; live production directory 0 items | Working-tree app is not deployed by this phase; live signup/email/admin-key journey remains deployment acceptance |
 
 ## Acceptance Matrix
 
@@ -89,3 +96,12 @@ This ledger tracks phase status, verification, migration IDs, and open issues. U
 | A19 | User attempts cancellation after `IN_REPAIR` | Rejected; no reversal of consumed parts |
 | A20 | Every role loads deployment from mobile private tab | No dead end; no unhandled error; demo login clear |
 | A21 | Review repo after deploy | README, `.env.example`, clean commits, no secret committed |
+| A22 | Owner selects owner signup, confirms email, and has no membership yet | Resumes `/owner/onboarding`; never falls through to `/customer` |
+| A23 | Public user selects an employee role or tampers with role/type parameters | Login-only guidance; no Auth metadata or membership grants a staff role |
+| A24 | Owner creates first shop during onboarding | Shop starts unpublished and owner plus active OWNER membership are committed atomically |
+| A25 | Owner tries to publish without hours, service, or each required staff role | Guarded mutation returns 409 `SHOP_NOT_READY`; directory remains unchanged |
+| A26 | Owner completes shop details, hours, service catalog, and SA/TECHNICIAN/PARTS/QC accounts | Publication succeeds; shop appears from database in public directory |
+| A27 | Staff member signs in with owner-created credentials | Verified membership routes to the correct shop portal; no customer-portal dead end |
+| A28 | One identity has multiple staff memberships | Explicit shop/role choice appears; tenant is not chosen from array order |
+| A29 | Production has no owner-created shops | Honest empty directory; no hardcoded or seeded fallback garages |
+| A30 | Fixture cleanup is requested against Cloud | Exact-project marked-record dry-run is required; no reset or broad name-based deletion |

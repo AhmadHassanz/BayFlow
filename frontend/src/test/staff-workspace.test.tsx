@@ -2,6 +2,7 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react';
 import { StaffShell } from '@/components/workspace/StaffShell';
+import { WorkspaceChoice } from '@/components/workspace/WorkspaceChoice';
 import { StaffQueue } from '@/components/workspace/StaffQueue';
 import { BookingRecord } from '@/components/workspace/BookingRecord';
 import { shopId, slotId } from './public-fixtures';
@@ -39,6 +40,7 @@ it('switches only to an active verified membership with the correct role route',
   const second = { ...membership, id: slotId, shopId: userId, role: 'TECHNICIAN' as const };
   render(<StaffShell identity={{ ...identity, memberships: [membership, second, { ...second, id: shopId, active: false }] }} membership={membership} shop={shop} shops={[shop, { ...shop, id: userId, name: 'Second Workshop' }]}><p>Body</p></StaffShell>);
   expect(screen.getAllByRole('option')).toHaveLength(2);
+  expect(screen.getByRole('link', { name: /All workspaces/ }).getAttribute('href')).toBe('/workspace');
   fireEvent.change(screen.getByLabelText('Shop & role'), { target: { value: slotId } });
   expect(mocks.push).toHaveBeenCalledWith(`/shops/${userId}/technician`);
 });
@@ -46,6 +48,13 @@ it('owner receives the workshop switcher link', () => {
   const owner = { ...membership, role: 'OWNER' as const };
   render(<StaffShell identity={{ ...identity, memberships: [owner] }} membership={owner} shop={shop} shops={[shop]}><p>Body</p></StaffShell>);
   expect(screen.getByRole('link', { name: /Your workshops/ }).getAttribute('href')).toBe('/owner');
+});
+it('renders explicit verified shop and role choices for a multi-membership identity', () => {
+  const second = { ...membership, id: slotId, shopId: userId, role: 'TECHNICIAN' as const };
+  render(<WorkspaceChoice memberships={[membership, second]} shops={[shop, { ...shop, id: userId, name: 'Second Workshop' }]} />);
+  expect(screen.getByRole('link', { name: /Open service advisor workspace/ }).getAttribute('href')).toBe(`/shops/${shopId}/advisor`);
+  expect(screen.getByRole('link', { name: /Open technician workspace/ }).getAttribute('href')).toBe(`/shops/${userId}/technician`);
+  expect(screen.getByRole('link', { name: /personal ledger/ }).getAttribute('href')).toBe('/customer');
 });
 it('reads the existing role-scoped API and links to the shared record', async () => {
   vi.stubGlobal('fetch', vi.fn().mockImplementation(async () => ok({ items: [booking], page: 1, pageSize: 50 })));

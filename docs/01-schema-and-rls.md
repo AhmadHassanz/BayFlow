@@ -40,6 +40,11 @@ See [I02 verification](verification/i02/README.md).
 - History is append-only.
 - Staff and services are soft-deactivated, not deleted.
 - Bookings with history are not deleted.
+- A shop is the tenant and organization boundary; do not add a parallel
+  `organizations` table for owner onboarding.
+- Account-type and requested-role query values are navigation hints, never stored
+  authority. Shop authorization continues to come only from ownership and active
+  `shop_memberships` rows.
 
 ## Identity, Shops, Catalog, Slots
 
@@ -80,6 +85,13 @@ See [I02 verification](verification/i02/README.md).
 - Require nonnegative quantities/prices and positive line quantities.
 - Estimate totals are computed from trusted line items; never trust client total.
 - DB-enforce active membership and valid role checks during transitions.
+- Publishing a shop must be rejected unless current database state proves at
+  least one valid working window, one active service, an active OWNER membership
+  for the authoritative owner, and active same-shop `SA`, `TECHNICIAN`, `PARTS`,
+  and `QC` memberships.
+- Owner-onboarding shop creation must explicitly create an unpublished shop.
+  Public projections continue to exclude all unpublished shops without weakening
+  base-table RLS.
 
 ## RLS / Grants Matrix
 
@@ -100,6 +112,40 @@ See [I02 verification](verification/i02/README.md).
 - Complex elevated transactions live in an unexposed private schema as `SECURITY DEFINER`, with empty `search_path` and fully qualified object names.
 - Every function rechecks `auth.uid()`, shop membership, actor assignment, current state, expected version, and data validity.
 - No direct UPDATE permissions on booking status or stock tables.
+- Publication readiness is checked inside the guarded shop mutation transaction.
+  A client-computed readiness flag or checklist is never trusted.
+- Staff Auth provisioning remains server-admin-only and membership attachment
+  remains owner-authorized. Public signup cannot create staff memberships.
+
+## MT01 Onboarding Data Decision
+
+MT01 adds no table, column, enum, role, or status. Resumable setup uses existing
+authoritative state:
+
+- no owner membership means the first shop has not been created;
+- an owned shop with `active = false` is an unpublished setup in progress;
+- `working_hours`, `services`, and `shop_memberships` supply readiness facts;
+- a shop with `active = true` is published only after the guarded readiness check
+  succeeds.
+
+This avoids duplicating tenancy or storing a client-controlled onboarding state.
+If later implementation proves that operational closure and publication must be
+represented independently, that is a schema-contract change requiring explicit
+approval rather than overloading a newly invented value in MT01.
+
+## MT03 Publication Readiness Enforcement
+
+Migration `20261010130000_mt03_shop_publication_readiness.sql` adds a private
+`BEFORE UPDATE OF active` trigger on `shops`. A false-to-true publication attempt
+is rejected with SQLSTATE `BF001` unless current database state has a nonempty
+working window, an active service, the active authoritative OWNER membership,
+and active same-shop `SA`, `TECHNICIAN`, `PARTS`, and `QC` memberships. The trigger
+uses only authoritative rows and exposes no client-executable helper privilege.
+
+Owner-onboarding creation explicitly sends `active:false`; public views therefore
+hide the workshop throughout setup. Existing published shops and disposable seed
+fixtures are unchanged by migration application. Deactivation remains permitted,
+and reactivation must satisfy the same readiness invariant.
 
 ## Open Questions
 

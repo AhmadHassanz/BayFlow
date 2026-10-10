@@ -4,7 +4,7 @@ import { cleanup, render, screen, waitFor, fireEvent } from '@testing-library/re
 import { CustomerLedger, NotificationSummary } from '@/components/workspace/CustomerLedger';
 import { BookingRecord } from '@/components/workspace/BookingRecord';
 import { AuthForm } from '@/components/workspace/AuthForm';
-import { authDestination, shopMembership } from '@/lib/workspace';
+import { authDestination, shopMembership, signupDestination } from '@/lib/workspace';
 import { statusInfo } from '@/lib/booking/status';
 import { bookingStatus } from '@/lib/contracts/bookings';
 import { shopId, slotId } from './public-fixtures';
@@ -20,6 +20,9 @@ afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 it('normalizes unsafe auth destinations and preserves booking returns', () => {
   for (const value of [null, '//evil.test', '/auth/callback', '/login', '/login/', '/signup#fragment', '/signup?next=x', '/\\evil']) expect(authDestination(value)).toBe('/customer');
   expect(authDestination('/book/123?resume=1')).toBe('/book/123?resume=1');
+  expect(signupDestination('owner', '/customer')).toBe('/owner/onboarding');
+  expect(signupDestination('customer', '/book/123?resume=1')).toBe('/book/123?resume=1');
+  expect(signupDestination('staff', '/owner')).toBe('/owner');
 });
 it('has next-step guidance for every backend status', () => { expect(Object.keys(statusInfo)).toEqual(bookingStatus.options); });
 it('membership lookup rejects inactive and foreign-user rows', () => {
@@ -103,6 +106,18 @@ it('uses verified memberships for default staff sign-in navigation', async () =>
   fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'example-password' } });
   fireEvent.click(screen.getByRole('button', { name: /Sign in/ }));
   await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith(`/shops/${shopId}/parts`));
+});
+it('routes multi-workshop staff to a chooser after sign-in', async () => {
+  mocks.login.mockResolvedValue({ data: { signedIn: true }, error: null });
+  vi.stubGlobal('fetch', vi.fn().mockImplementation(async () => ok({ user: { id: customerId, fullName: 'Staff', phone: null, email: 'staff@example.test' }, memberships: [
+    { id: customerId, shopId, userId: customerId, role: 'PARTS', active: true },
+    { id: slotId, shopId: customerId, userId: customerId, role: 'TECHNICIAN', active: true },
+  ] })));
+  render(<AuthForm mode="login" next="/customer" roleRedirect />);
+  fireEvent.change(screen.getByLabelText('Email address'), { target: { value: 'staff@example.test' } });
+  fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'example-password' } });
+  fireEvent.click(screen.getByRole('button', { name: /Sign in/ }));
+  await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith('/workspace'));
 });
 it('keeps sign-in errors retryable and never navigates an unsuccessful session', async () => {
   mocks.login.mockRejectedValueOnce(new Error('private internal error'));

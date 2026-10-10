@@ -7,6 +7,9 @@ export function authDestination(next: string | null) {
   const path = safeNext(next);
   return path === '/api/v1/me' || /^\/(login|signup)(\/|\?|#|$)/.test(path) ? '/customer' : path;
 }
+export function signupDestination(accountType: string | null, next: string | null) {
+  return accountType === 'owner' ? '/owner/onboarding' : authDestination(next);
+}
 export function activeMemberships(identity: BookingIdentity) {
   return identity.memberships.filter(item => item.active && item.userId === identity.user.id);
 }
@@ -18,6 +21,7 @@ export function membershipHome(membership: Membership) { return `/shops/${member
 export function identityHome(identity: BookingIdentity) {
   const memberships = activeMemberships(identity);
   if (memberships.some(item => item.role === 'OWNER')) return '/owner';
-  return memberships[0] ? membershipHome(memberships[0]) : '/customer';
+  if (memberships.length === 1) return membershipHome(memberships[0]);
+  return memberships.length > 1 ? '/workspace' : '/customer';
 }
 export function canUseWorkspace(role: Membership['role'], segment: string) { return roleSegments[role] === segment || (role === 'OWNER' && segment === 'settings'); }

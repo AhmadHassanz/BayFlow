@@ -43,7 +43,7 @@ it('validates a new shop before posting and uses only contract fields', async ()
   fireEvent.click(screen.getByRole('button', { name: /Create workshop/ }));
   await waitFor(() => expect(saved).toHaveBeenCalled());
   const body = JSON.parse(fetcher.mock.calls[0][1].body);
-  expect(body).toMatchObject({ name: 'New Workshop', timezone: 'Asia/Karachi', slotCapacity: 1, workingHours: {} });
+  expect(body).toMatchObject({ name: 'New Workshop', timezone: 'Asia/Karachi', slotCapacity: 1, workingHours: {}, active: false });
   expect(body).not.toHaveProperty('ownerId'); expect(body).not.toHaveProperty('slug');
 });
 it('blocks another create attempt after a lost response', async () => {

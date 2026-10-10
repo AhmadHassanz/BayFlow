@@ -67,6 +67,15 @@ it('signup preserves a safe booking return path in email confirmation without pe
   await signup({ fullName: 'Name', email: authUser.email, password }, 'https://attacker.test');
   expect(new URL(client.auth.signUp.mock.calls[1][0].options.emailRedirectTo).searchParams.get('next')).toBe('/api/v1/me');
 });
+it('signup preserves the owner onboarding destination without adding role metadata', async () => {
+  const client = setup();
+  await signup({ fullName: 'Owner Name', email: authUser.email, password }, '/owner/onboarding');
+  const request = client.auth.signUp.mock.calls[0][0];
+  expect(new URL(request.options.emailRedirectTo).searchParams.get('next')).toBe('/owner/onboarding');
+  expect(request.options.data).toEqual({ full_name: 'Owner Name' });
+  expect(request.options.data).not.toHaveProperty('role');
+  expect(request.options.data).not.toHaveProperty('type');
+});
 it('login sets the Supabase cookie session, syncs profile, and returns no token/password', async () => {
   const client = setup();
   const result = await login({ email: authUser.email, password });

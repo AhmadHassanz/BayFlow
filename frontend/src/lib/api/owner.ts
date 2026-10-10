@@ -37,6 +37,7 @@ export function ownerFailure(error: unknown) {
   if (error.status === 401) return 'Your session expired. Sign in again before making changes.';
   if (error.status === 403 || error.status === 404) return 'You no longer have access to manage this record. Refresh or check your workshop.';
   if (error.code === 'SCHEDULE_CONFLICT') return 'Existing bookings conflict with these hours or capacity. Your settings were not changed. Keep their appointments available and try again.';
+  if (error.code === 'SHOP_NOT_READY') return 'Complete the opening hours, add an active service, and create active Service Advisor, Technician, Parts and Quality Control accounts before publishing.';
   if (error.code === 'EMAIL_EXISTS') return 'That email already has an account. Its credentials were not changed. Use a new staff email.';
   if (error.code === 'STAFF_PROVISIONING_INCOMPLETE') return 'Staff setup needs operator review in Supabase. Do not submit another account request until its membership and activation are checked.';
   if (error.status === 429) return 'Too many requests. Wait a minute before trying again.';

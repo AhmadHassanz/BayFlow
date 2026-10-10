@@ -224,6 +224,22 @@ See [the cleanup and security audit](docs/repository-hygiene.md) for the current
 findings and deliberate exclusions. No cleanup operation commits, pushes, changes
 Cloud state or rotates credentials automatically.
 
+### Marked Cloud demo cleanup
+
+`backend/scripts/cleanup-cloud-demo.mjs` removes only the B11 demo fixture set. It
+requires `BAYFLOW_CLEANUP_PROJECT_REF` to exactly match the linked project and is
+dry-run by default:
+
+```powershell
+cd backend
+$env:BAYFLOW_CLEANUP_PROJECT_REF = '<exact-project-ref>'
+npm run db:demo:cleanup
+```
+
+Execution additionally requires `--execute` and a project-specific confirmation.
+The script rejects deterministic-ID collisions and marked-user dependencies
+outside the three fixture shops. It never resets Cloud or matches display names.
+
 ## Opt-in F13 headless QA
 
 From `frontend/`, `npm run test:e2e:list` lists tests without launching a server.

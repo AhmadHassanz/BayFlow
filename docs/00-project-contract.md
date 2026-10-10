@@ -65,6 +65,86 @@ Estimate rejection, cancellation, immutable history, shop isolation, seeded role
 10. SA signals ready for pickup.
 11. Customer collects car and booking ends.
 
+## Owner Onboarding Amendment
+
+The production onboarding flow distinguishes account intent from authorization.
+Public self-registration offers only `CUSTOMER` and `OWNER` paths. The selected
+path controls navigation and onboarding copy, but never creates or proves a shop
+role. `SA`, `TECHNICIAN`, `PARTS`, and `QC` users cannot self-register as staff;
+their Auth identities and memberships are created by an authorized owner.
+
+A shop remains the tenant and the owner's organization boundary. BayFlow does not
+add a separate organization entity: one owner identity may own several shops, and
+each shop keeps an independent team, catalog, schedule, slots, bookings,
+inventory, estimates, and history.
+
+After owner Auth signup or login, an identity with no active memberships and an
+explicit owner-onboarding destination must resume `/owner/onboarding`, not fall
+through to `/customer`. The owner onboarding journey collects and reviews:
+
+1. Owner name and Auth credentials.
+2. Shop name, city, address, phone, timezone, and publication choice.
+3. Open days, ordered non-overlapping working windows, appointment duration, and
+   simultaneous booking capacity.
+4. One or more services with name, description, estimated duration, and optional
+   whole-PKR base price.
+5. Owner-created staff accounts for `SA`, `TECHNICIAN`, `PARTS`, and `QC`, with
+   initial credentials displayed only to the owner in the creation session.
+
+The flow is resumable because Auth signup and shop/catalog/team setup cannot be a
+single transaction. Creating the first shop atomically establishes the verified
+identity as its owner and adds the active `OWNER` membership. Subsequent steps use
+the existing guarded shop, service, and team operations.
+
+## Publication Readiness
+
+New owner-onboarding shops start unpublished. A shop may be published to the
+customer directory only when all of the following are true:
+
+- required contact and location fields are valid;
+- at least one day has a valid working window;
+- appointment duration and capacity are valid;
+- at least one active service exists;
+- active same-shop memberships exist for `SA`, `TECHNICIAN`, `PARTS`, and `QC`;
+- the owner still owns the shop and has an active `OWNER` membership.
+
+Publication readiness must be enforced on the server and in PostgreSQL, not only
+by hiding a client button. Until ready, the owner can resume setup and preview
+settings, while anonymous directory, shop-detail, service, and slot reads treat
+the shop as unpublished.
+
+## Account Destination Rules
+
+After authentication, navigation is derived from verified active memberships and
+the sanitized requested destination:
+
+1. A requested authorized route is preserved.
+2. An owner with one or more owner memberships opens `/owner`.
+3. A staff-only identity with one membership opens that membership's workspace.
+4. An identity with multiple staff memberships receives an explicit shop/role
+   choice; array order must not choose an arbitrary tenant.
+5. A verified owner-onboarding request with no memberships opens
+   `/owner/onboarding`.
+6. An identity with no memberships and no owner-onboarding request opens the
+   customer portal.
+
+A user may be both a global customer and a shop member. Customer capability is
+not removed when a membership exists; the interface must provide an explicit
+way to switch contexts. Query-string account or role values are navigation hints
+only and never authorization evidence.
+
+## Production Fixture Policy
+
+Hardcoded or database-seeded mock garages must not populate the production
+customer directory. Native PostgreSQL fixtures, automated Cloud test fixtures,
+and an explicitly disposable judge/demo environment remain allowed. Production
+starts empty and gains public shops only through owner onboarding.
+
+Existing marked Cloud demo records may be removed only by a separate, explicitly
+approved cleanup phase. Cleanup must verify the exact project, default to dry-run,
+target only records carrying the known fixture marker or deterministic fixture
+identities, account for dependent history, and never reset the Cloud database.
+
 ## Boundary Decisions
 
 - No mandatory customer photo uploader.
@@ -130,6 +210,10 @@ No direct DB password, JWT secret, service role key, or admin secret may be expo
 - B03's minimum runtime versions are pinned in `frontend/package.json` and its
   lockfile; verified Node is 24.15.0. Deployment and auth redirect configuration
   still require independent verification; no B00 deployment gate is claimed here.
+- The exact UI representation of a multi-membership shop/role chooser is deferred
+  to implementation, but deterministic user choice is required by this contract.
+- Production demo cleanup remains a separate destructive operation and requires
+  an exact inventory plus explicit approval before execution.
 
 ## Do Not Change Without Explicit Approval
 

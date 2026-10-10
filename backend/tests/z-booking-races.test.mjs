@@ -23,7 +23,8 @@ async function fixture(callback) {
       workingHours:Object.fromEntries(['mon','tue','wed','thu','fri','sat','sun'].map(day=>[day,[['09:00','18:00']]]))}])).rows[0].s;
     const service=(await admin.query('select public.save_service($1,null,$2) s',[s.id,{name:'Inspection',durationMinutes:60}])).rows[0].s;
     await admin.query('reset role');
-    await admin.query("insert into public.shop_memberships(shop_id,user_id,role) values($1,$2,'SA')",[s.id,user(11)]);
+    for(const [number,role] of [[11,'SA'],[12,'TECHNICIAN'],[13,'PARTS'],[14,'QC']])
+      await admin.query('insert into public.shop_memberships(shop_id,user_id,role) values($1,$2,$3)',[s.id,user(number),role]);
     const actors=Array.from({length:8},()=>randomUUID());
     for(const actor of actors) {
       await admin.query('insert into auth.users(id,email) values($1,$2)',[actor,`${actor}@bayflow.example.test`]);

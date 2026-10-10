@@ -65,6 +65,7 @@ export function catalogError(error: { code?: string }): never {
   if (error.code === 'P0002') throw new ApiError(404, 'NOT_FOUND', 'Service was not found.');
   if (error.code === '22023') throw new ApiError(400, 'INVALID_INPUT', 'Check the catalog settings.');
   if (error.code === '23514') throw new ApiError(409, 'SCHEDULE_CONFLICT', 'Existing appointments prevent this schedule or capacity change.');
+  if (error.code === 'BF001') throw new ApiError(409, 'SHOP_NOT_READY', 'Complete workshop hours, services and required team roles before publishing.');
   throw new ApiError(500, 'DATABASE_ERROR', 'The catalog operation could not be completed.');
 }
 export async function saveShop(client: Client, shopId: string | null, settings: Json) {

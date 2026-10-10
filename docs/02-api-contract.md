@@ -203,6 +203,43 @@ and redirects only to a local path, defaulting to `/api/v1/me` while UI is absen
 Invalid/expired links return 400. Public signup accepts only name/email/password;
 it never establishes a shop role. Shop creation remains B04.
 
+### MT01 account intent and onboarding amendment
+
+Public account choice is limited to customer signup and owner signup. The Auth
+payload remains name/email/password; `type`, `role`, `shopId`, owner ID, and
+membership are not accepted as authoritative signup fields. A sanitized
+`next=/owner/onboarding` may preserve owner intent through login, email
+confirmation, and callback, but the destination grants no database permission.
+
+Employee role choices are login-only. `SA`, `TECHNICIAN`, `PARTS`, and `QC`
+accounts continue to be created through the owner-only team operation. A public
+caller cannot turn a new or existing Auth identity into staff by changing query
+parameters, metadata, or a request body.
+
+Authenticated destination resolution uses current active memberships. Owners go
+to `/owner`; a single staff membership goes to its scoped workspace; multiple
+staff memberships require an explicit chooser; a membership-free owner-onboarding
+request goes to `/owner/onboarding`; other membership-free identities go to
+`/customer`. Users with both customer activity and memberships retain an explicit
+personal-workspace link.
+
+### MT04 deterministic employee workspace resolution
+
+`/workspace` is the authenticated chooser for an identity with more than one
+active non-owner membership. It renders only memberships returned by the verified
+server identity projection and only shop labels readable through the user's RLS
+client. Each choice is derived from the authoritative membership role and shop ID;
+the browser cannot select an arbitrary role or tenant. Missing shop metadata fails
+closed rather than rendering a partial or guessed choice.
+
+The destination algorithm is order-independent: any active OWNER membership goes
+to `/owner`, exactly one active staff membership goes directly to its scoped
+workspace, more than one active staff membership goes to `/workspace`, and no
+active membership goes to `/customer`. Existing explicit safe booking/customer
+return paths remain unchanged. Staff workspaces expose both the verified switcher
+and the personal customer ledger, so operational access does not replace customer
+access.
+
 ## B04 Shop, Catalog and Availability Contract
 
 B04 implements the public directory, detail by ID/slug, services and slots routes,
@@ -219,6 +256,27 @@ the shop UUID, is immutable, and allows duplicate business names safely. A publi
 identity may create its first shop; a staff identity cannot self-promote. An
 already-authoritative owner may create further shops, including when legitimately
 holding another role elsewhere. Deactivated staff cannot bypass this restriction.
+
+MT01 amends the onboarding use of this operation: shops created through owner
+onboarding must submit `active:false`; the product must not rely on the historical
+published default. A later implementation phase may change the endpoint default
+to unpublished after updating compatibility tests. No new shop endpoint is
+authorized by MT01.
+
+Changing `active` from false to true is a launch operation. The guarded database
+mutation must verify valid working hours, at least one active service, the active
+authoritative OWNER membership, and active same-shop `SA`, `TECHNICIAN`, `PARTS`,
+and `QC` memberships. Failure returns 409 `SHOP_NOT_READY` with a safe list of
+missing readiness categories; it must not expose user IDs, emails, credentials,
+or private membership records. Deactivation remains owner-authorized and does not
+delete catalog, slots, memberships, bookings, or history.
+
+MT03 implements this boundary with migration
+`20261010130000_mt03_shop_publication_readiness.sql`. PostgreSQL SQLSTATE `BF001`
+maps to HTTP 409 `SHOP_NOT_READY`; the response gives a safe completion message
+without membership identities. New application-created shops default to
+`active:false`. The existing shop, service, and team endpoints remain the only
+mutations used by the onboarding flow; no parallel organization API is added.
 
 `PATCH /owner/shops/[id]` accepts a nonempty subset of those same settings.
 OWNER membership and ownership are rechecked under SQL locks. All mutations
@@ -602,9 +660,9 @@ siblings with different dynamic parameter names). Public `/shops/[slug]` remains
 a slug-based profile; `/shops/[slug]/advisor|technician|parts|qc|bookings/[id]`
 requires the dynamic value to be a UUID shop ID. Wrong role/shop pages return a
 safe unavailable/not-found view before requesting shop metadata. Default sign-in
-without a requested return path resolves verified memberships: owner -> `/owner`,
-otherwise role-specific workspace, otherwise `/customer`. Explicit safe customer
-or booking return paths are preserved. Session refresh covers all private routes.
+without a requested return path follows the MT04 destination algorithm, including
+`/workspace` for multiple active staff memberships. Explicit safe customer or
+booking return paths are preserved. Session refresh covers all private routes.
 
 Role landing views use GET `/api/v1/shops/[id]/bookings?page=N&assignee=all`.
 Its SQL already restricts technicians/parts to assigned work and QC to unclaimed

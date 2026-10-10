@@ -162,3 +162,20 @@ test('B04 helper and wrapper grants preserve the private boundary', () => withDa
     assert.equal(row.prosecdef,['save_shop_impl','save_service_impl'].includes(row.proname));
   }
 }));
+
+test('MT03 keeps onboarding shops private until hours, services and every required role exist', () => withDatabase(async db => {
+  await asUser(db,1);
+  const s=await create(db,{...settings,active:false});
+  assert.equal(s.active,false);
+  await expectSqlState(db,update,[s.id,{active:true}],'BF001');
+  await db.query('select public.save_service($1,null,$2)',[s.id,{name:'Inspection',durationMinutes:60,basePricePkr:1500}]);
+  await expectSqlState(db,update,[s.id,{active:true}],'BF001');
+  await db.query('reset role');
+  for(const [number,role] of [[11,'SA'],[12,'TECHNICIAN'],[13,'PARTS'],[14,'QC']])
+    await db.query('insert into public.shop_memberships(shop_id,user_id,role) values($1,$2,$3)',[s.id,user(number),role]);
+  await asUser(db,1);
+  const published=(await db.query(update,[s.id,{active:true}])).rows[0].shop;
+  assert.equal(published.active,true);
+  await asUser(db,null,'anon');
+  assert.equal((await db.query('select id from public.public_shops where id=$1',[s.id])).rowCount,1);
+}));

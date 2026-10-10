@@ -9,12 +9,14 @@ vi.mock('@/lib/supabase/server', () => ({ createClient: mocks.createClient }));
 vi.mock('next/navigation', () => ({ redirect: (path: string) => { throw new Error(`redirect:${path}`); }, notFound: () => { throw new Error('not-found'); } }));
 import { workspaceIdentity, shopWorkspace } from '@/server/queries/workspace';
 import OwnerPage from '@/app/owner/page';
+import OwnerOnboardingPage from '@/app/owner/onboarding/page';
+import WorkspacePage from '@/app/workspace/page';
 
 const userId = 'b1100000-0000-4000-8000-000000000001';
 const member = { id: userId, shopId, userId, role: 'SA' as const, active: true };
-function setup(rows = [{ id: userId, shop_id: shopId, user_id: userId, role: 'SA', active: true }]) {
+function setup(rows = [{ id: userId, shop_id: shopId, user_id: userId, role: 'SA', active: true }], shopRows = [{ id: shopId, name: 'Workshop', city: 'Lahore', timezone: 'Asia/Karachi' }]) {
   const memberships = { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), order: vi.fn().mockResolvedValue({ data: rows, error: null }) };
-  const shops = { select: vi.fn().mockReturnThis(), in: vi.fn().mockReturnThis(), order: vi.fn().mockResolvedValue({ data: [{ id: shopId, name: 'Workshop', city: 'Lahore', timezone: 'Asia/Karachi' }], error: null }) };
+  const shops = { select: vi.fn().mockReturnThis(), in: vi.fn().mockReturnThis(), order: vi.fn().mockResolvedValue({ data: shopRows, error: null }) };
   const client = { from: vi.fn((table: string) => table === 'shops' ? shops : memberships) };
   mocks.requireIdentity.mockResolvedValue({ client, user: { id: userId, email: 'user@example.test' } });
   mocks.syncProfile.mockResolvedValue({ id: userId, fullName: 'Member', phone: null });
@@ -47,6 +49,14 @@ it('denies the owner switcher to a service advisor', async () => {
   await expect(OwnerPage()).rejects.toThrow('not-found');
   expect(client.from).not.toHaveBeenCalledWith('shops');
 });
+it('allows only membership-free identities to start owner onboarding', async () => {
+  setup([]);
+  expect(await OwnerOnboardingPage()).toBeTruthy();
+  setup([{ id: userId, shop_id: shopId, user_id: userId, role: 'OWNER', active: true }]);
+  expect(await OwnerOnboardingPage()).toBeTruthy();
+  setup();
+  await expect(OwnerOnboardingPage()).rejects.toThrow('not-found');
+});
 it('denies inactive membership and unauthorized role routes on the server', async () => {
   setup([{ id: userId, shop_id: shopId, user_id: userId, role: 'SA', active: false }]);
   await expect(shopWorkspace(shopId, '/advisor', 'advisor')).rejects.toThrow('not-found');
@@ -70,4 +80,26 @@ it.each(['OWNER', 'SA', 'TECHNICIAN', 'PARTS', 'QC'] as const)('resolves %s home
   expect(identityHome(identity)).toBe(role === 'OWNER' ? '/owner' : home);
   item.active = false;
   expect(identityHome(identity)).toBe('/customer');
+});
+it('uses an explicit chooser instead of database row order for multiple staff memberships', async () => {
+  const secondShopId = 'b1100000-0000-4000-8000-000000000002';
+  const rows = [
+    { id: userId, shop_id: shopId, user_id: userId, role: 'SA', active: true },
+    { id: secondShopId, shop_id: secondShopId, user_id: userId, role: 'TECHNICIAN', active: true },
+  ];
+  const identity = { user: { id: userId, fullName: 'Member', email: null, phone: null }, memberships: rows.map(row => ({ id: row.id, shopId: row.shop_id, userId: row.user_id, role: row.role as 'SA' | 'TECHNICIAN', active: row.active })) };
+  expect(identityHome(identity)).toBe('/workspace');
+  setup(rows, [
+    { id: shopId, name: 'Workshop', city: 'Lahore', timezone: 'Asia/Karachi' },
+    { id: secondShopId, name: 'Second Workshop', city: 'Karachi', timezone: 'Asia/Karachi' },
+  ]);
+  expect(await WorkspacePage()).toBeTruthy();
+});
+it('redirects the workspace entry for owner, single-membership and customer identities', async () => {
+  setup([{ id: userId, shop_id: shopId, user_id: userId, role: 'OWNER', active: true }]);
+  await expect(WorkspacePage()).rejects.toThrow('redirect:/owner');
+  setup();
+  await expect(WorkspacePage()).rejects.toThrow(`redirect:/shops/${shopId}/advisor`);
+  setup([]);
+  await expect(WorkspacePage()).rejects.toThrow('redirect:/customer');
 });
