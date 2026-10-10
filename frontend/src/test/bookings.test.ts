@@ -66,7 +66,9 @@ it('malformed/oversize JSON and safe conflicts never expose database text', asyn
   expect((await POST(request({ ...input, symptomNotes: 'x'.repeat(17000) }))).status).toBe(400);
   mocks.create.mockRejectedValue(new ApiError(409, 'SLOT_CONFLICT', 'Choose another slot.'));
   const response = await POST(request()); expect(response.status).toBe(409);
-  expect(await response.json()).toEqual({ data: null, error: { code: 'SLOT_CONFLICT', message: 'Choose another slot.' } });
+  const body = await response.json();
+  expect(body).toMatchObject({ data: null, error: { code: 'SLOT_CONFLICT', message: 'Choose another slot.' } });
+  expect(response.headers.get('x-request-id')).toBe(body.error.details.requestId);
 });
 it('rate-limit denial never reaches booking writes', async () => {
   mocks.limit.mockImplementation(() => { throw new ApiError(429, 'RATE_LIMITED', 'Try later.'); });

@@ -2,94 +2,121 @@
 
 ## Status
 
-I04 is **BLOCKED** at deployment preflight. No application, database, or deployment
-change was made. The phase cannot pass from localhost because its contract requires
-the complete judge script on a public deployment and explicitly forbids declaring
-release readiness from a localhost-only demo.
+I04 is **PASSED** against the public Vercel deployment at
+`https://bay-flow-delta.vercel.app`. The production journey completed in 3.1
+minutes, inside the 20-minute exit gate. No localhost application server was used.
 
 ## Plan
 
-1. Confirm the I01, I02, I03, and F13 prerequisites.
-2. Resolve the configured application origin and deployment access without exposing
-   credentials.
-3. On a clean private browser against the public deployment, create a new booking
-   and execute the appendix journey through the customer, advisor, technician,
-   parts, and QC roles, including estimate rejection/resend and QC fail/resubmit.
-4. Record timings and screenshots, verify each role's scoped landing page and the
-   customer's final completed state, fix only the highest-priority reproducible
-   issue, and rerun affected assertions.
-5. Update the README demo section and phase ledger only after the public run.
+1. Verify that the production URL responds and renders BayFlow.
+2. Use fresh isolated browser contexts and the existing B11 disposable identities.
+3. Create a new booking and execute the complete customer, owner, advisor,
+   technician, parts and QC journey against Vercel and Supabase Cloud.
+4. Include estimate rejection/revision, partial receipt, QC failure/rework/pass,
+   ready notification and final pickup.
+5. Verify every seeded role at a 375px viewport, tenant denial behavior, hard
+   refresh persistence and visually inspect the captured screenshots.
+6. Run the relevant automated regression and repository-safety gates.
 
-## Preflight Evidence
+## Changes
 
-The progress ledger records I01, I02, I03, and F13 as PASSED, so the functional
-prerequisites are present.
+- Extended the existing Playwright helper with an explicit I04-only allowlist for
+  `bay-flow-delta.vercel.app`. Localhost remains the default and any other remote
+  host is rejected.
+- Added a 20-minute timeout only when `BAYFLOW_I04_PUBLIC=1`; the ordinary local
+  journey retains its three-minute budget.
+- Updated the README with the verified live URL and non-secret demo identity list.
+- No application feature, database migration, RLS policy, grant, status, API or
+  production environment setting changed during this phase.
 
-The deployment preflight was performed without printing any URL, key, token, or
-password. It found:
+## Public Verification
 
-- `frontend/.env.local` defines `NEXT_PUBLIC_SITE_URL`, but the parsed URI is HTTP
-  loopback.
-- Neither the repository root nor `frontend/` contains a `.vercel/project.json`
-  project link.
-- No `vercel` executable is available.
-- `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and `VERCEL_PROJECT_ID` are absent from the
-  current process environment.
-- Repository documentation consistently records that prior browser verification
-  used an isolated loopback production server and that no Vercel deployment has
-  occurred.
+### Availability
 
-These facts leave no public target on which to execute the required I04 script.
-Downloading a CLI or inventing a deployment target would not provide the missing
-account authorization and is outside this phase.
+An independent HTTPS request returned status 200 and BayFlow content from the
+production origin.
 
-## Commands and Outputs
+### Full judge journey
 
 ```powershell
-Get-Command vercel -ErrorAction SilentlyContinue
-Test-Path .vercel/project.json
-Test-Path frontend/.vercel/project.json
+$env:BAYFLOW_E2E_BASE_URL='https://bay-flow-delta.vercel.app'
+$env:BAYFLOW_I04_PUBLIC='1'
+$env:BAYFLOW_E2E_DEMO_WRITES='1'
+$env:BAYFLOW_E2E_PARTS='1'
+npm run test:e2e -- journey.spec.ts --project=desktop-1440
 ```
 
-Output: no Vercel executable; both project-link checks returned `False`.
+Final output: **1 passed in 3.1 minutes**.
 
-The environment preflight parsed only presence and origin properties, not secret
-values. Output:
+The successful run used clean, independent browser contexts and verified:
 
-```text
-SiteUrlConfigured: True
-SiteUrlIsLoopback: True
-SiteScheme: http
-VercelTokenPresent: False
-VercelOrgPresent: False
-VercelProjectPresent: False
-RootVercelLink: False
-FrontendVercelLink: False
+- owner settings access and availability refresh;
+- customer booking from the public flow and persistence on reload;
+- advisor confirmation and technician assignment;
+- technician inspection and a real itemized PART plus LABOUR estimate;
+- advisor labour adjustment and estimate send;
+- foreign customer deep-link denial;
+- customer rejection, immutable prior revision, advisor revision and resend;
+- customer approval and parts-person assignment;
+- purchase order plus two partial receipts and stock allocation;
+- technician repair completion;
+- QC claim, failed checklist and recorded issue;
+- technician rework and resubmission;
+- second QC claim and pass;
+- advisor ready notification;
+- customer pickup and final `COMPLETED` state after reload.
+
+The first attempt used the prior 180-second local harness budget. It reached QC
+pass and then timed out while opening the advisor record. The application had not
+failed; the public journey simply exceeded the local budget. Its disposable QA
+booking remains at `READY_FOR_PICKUP`. The I04-only 20-minute budget was then added
+and the complete fresh journey passed.
+
+### Six-role mobile and isolation gate
+
+```powershell
+$env:BAYFLOW_E2E_BASE_URL='https://bay-flow-delta.vercel.app'
+$env:BAYFLOW_I04_PUBLIC='1'
+npm run test:e2e -- visual.spec.ts --project=mobile-375 --grep 'every seeded role'
 ```
 
-No judge-flow tests were run because a localhost run cannot meet the I04 exit gate.
-No test result is claimed.
+Output: **1 passed in 1.0 minute**. Customer, owner, advisor, technician, parts and
+QC identities each authenticated into a real responsive workspace. The advisor's
+foreign-shop deep link remained unavailable. Page errors, unexpected console
+errors and page-wide horizontal overflow were absent.
 
-## Required Unblock
+Screenshots for the six mobile workspaces plus the initial and completed customer
+records were generated under the ignored `frontend/test-results/` directory and
+visually inspected. The completed record showed revision 1 rejected, revision 2
+approved, the failed and passed QC runs, ready notification and final completion.
+No clipping, overlap, broken layout or credential exposure was observed.
 
-Provide or configure a public Vercel deployment of `frontend/` with the required
-production environment variables and Supabase Auth redirect allowlist, then make
-the public URL available as `NEXT_PUBLIC_SITE_URL`. Deployment credentials should
-be configured privately in the environment or through an existing Vercel project
-link; they must not be pasted into chat or committed.
+## Regression and Safety Outputs
 
-Once available, resume I04 rather than starting B12 or R00.
+- `npm test -- --maxWorkers=4`: **364/364 passed** across 37 files.
+- Frontend `npm run typecheck`: passed.
+- Frontend `npm run lint`: passed.
+- Frontend `npm run build`: passed; 15/15 static pages generated.
+- Backend `npm run typecheck`: passed.
+- `node backend/scripts/check-repository.mjs --history`: 328 candidate files,
+  328 indexed blobs, three local env files, 1008 history objects, **zero findings**.
+- Final `git diff --check`: passed with only Windows LF-to-CRLF notices.
+- Generated `frontend/src/lib/supabase/database.types.ts`: no phase diff.
+- Staged diff: empty.
+- Both private env files remained ignored.
 
-## Risks and Limits
+## Risks and Limitations
 
-- The existing localhost and Supabase Cloud checks do not prove deployment routing,
-  cookies, redirects, environment configuration, or clean-browser behavior on the
-  public origin.
-- No screenshots or 20-minute timing record exist for a public deployment.
-- The README demo section remains unchanged because there is no verified live URL
-  or completed public judge run to document.
-- No Cloud reset, reseed, migration, deployment, commit, stage, or push occurred.
+- The public test writes real disposable QA history to the B11 Supabase project.
+  One first-attempt record remains ready for collection and one successful I04
+  record remains completed. They were not deleted or rewritten.
+- The six-role mobile check used Chromium. Safari and Firefox remain manual smoke
+  options, not part of the I04 exit gate.
+- Existing development-tool dependency advisories are unchanged and remain outside
+  I04 scope.
+- No Cloud reset, reseed, migration, RLS/grant change, generated-type rewrite,
+  deployment mutation, commit or push was performed by I04 verification.
 
 ## Next Phase
 
-I04 remains the active blocked phase. B12 is next only after I04 passes.
+B12 is the exact next phase. It was not started here.

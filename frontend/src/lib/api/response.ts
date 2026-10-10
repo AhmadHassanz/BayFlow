@@ -11,8 +11,10 @@ export function failure(error: unknown) {
   const known = error instanceof ApiError ? error : error instanceof z.ZodError
     ? new ApiError(400, 'INVALID_INPUT', 'Check the submitted fields.')
     : new ApiError(500, 'INTERNAL_ERROR', 'The request could not be completed.');
-  return NextResponse.json({ data: null, error: { code: known.code, message: known.message } },
-    { status: known.status, headers: { 'Cache-Control': 'private, no-store', Vary: 'Cookie' } });
+  const requestId = crypto.randomUUID();
+  console.error('[bayflow-api]', { requestId, status: known.status, code: known.code });
+  return NextResponse.json({ data: null, error: { code: known.code, message: known.message, details: { requestId } } },
+    { status: known.status, headers: { 'Cache-Control': 'private, no-store', Vary: 'Cookie', 'X-Request-Id': requestId } });
 }
 export async function jsonBody(request: Request): Promise<unknown> {
   const text = await request.text();

@@ -29,12 +29,17 @@ export function requireDemoWrites() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || envValue(text, 'NEXT_PUBLIC_SUPABASE_URL');
   if (url !== 'https://tlqvlsrmxueuuzxyltej.supabase.co') throw new Error('Live workflow QA is restricted to the known B11 demo project.');
   const host = new URL(process.env.BAYFLOW_E2E_BASE_URL ?? 'http://localhost:3104').hostname;
-  if (!['127.0.0.1', 'localhost', '[::1]'].includes(host)) throw new Error('Demo workflow QA requires the local application server, not a remote deployment.');
+  const allowedPublicHost = process.env.BAYFLOW_I04_PUBLIC === '1' && host === 'bay-flow-delta.vercel.app';
+  if (!['127.0.0.1', 'localhost', '[::1]'].includes(host) && !allowedPublicHost)
+    throw new Error('Demo workflow QA requires the local application server or the explicitly allowed I04 deployment.');
 }
 export async function login(page: Page, role: DemoRole) {
   try {
     await page.goto('/login');
-    if (!['127.0.0.1', 'localhost', '[::1]'].includes(new URL(page.url()).hostname)) throw new Error('Authenticated demo QA requires the local application server.');
+    const host = new URL(page.url()).hostname;
+    const allowedPublicHost = process.env.BAYFLOW_I04_PUBLIC === '1' && host === 'bay-flow-delta.vercel.app';
+    if (!['127.0.0.1', 'localhost', '[::1]'].includes(host) && !allowedPublicHost)
+      throw new Error('Authenticated demo QA requires the local application server or the explicitly allowed I04 deployment.');
     await page.getByLabel('Email address').fill(`demo-${role}@bayflow.example.test`);
     await page.getByLabel('Password').fill(demoPassword());
     await page.getByRole('button', { name: /^Sign in/ }).click();

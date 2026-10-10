@@ -24,7 +24,9 @@ it('unauthenticated /me returns a safe 401 and no cacheable session data', async
   mocks.identity.mockRejectedValue(new ApiError(401, 'UNAUTHENTICATED', 'Sign in to continue.'));
   const response = await GET();
   expect(response.status).toBe(401);
-  expect(await response.json()).toEqual({ data: null, error: { code: 'UNAUTHENTICATED', message: 'Sign in to continue.' } });
+  const body = await response.json();
+  expect(body).toMatchObject({ data: null, error: { code: 'UNAUTHENTICATED', message: 'Sign in to continue.' } });
+  expect(response.headers.get('x-request-id')).toBe(body.error.details.requestId);
   expect(response.headers.get('cache-control')).toContain('no-store');
 });
 it('/me returns only the verified identity and its active membership DTOs', async () => {

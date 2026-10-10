@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:smoke": "node scripts/smoke-auth.mjs",
+    "test:smoke:production": "node scripts/smoke-production.mjs",
     "test:e2e": "playwright test",
     "test:e2e:list": "playwright test --list"
   },

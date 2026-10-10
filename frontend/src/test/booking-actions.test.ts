@@ -146,7 +146,9 @@ it('maps service conflicts without exposing database details', async () => {
   mocks.apply.mockRejectedValue(new ApiError(409, 'STATE_CONFLICT', 'Reload this booking.'));
   const response = await POST(request({ action: 'CONFIRM_BOOKING', expectedVersion: 0, idempotencyKey: id }), context);
   expect(response.status).toBe(409);
-  expect(await response.json()).toEqual({ data: null, error: { code: 'STATE_CONFLICT', message: 'Reload this booking.' } });
+  const body = await response.json();
+  expect(body).toMatchObject({ data: null, error: { code: 'STATE_CONFLICT', message: 'Reload this booking.' } });
+  expect(response.headers.get('x-request-id')).toBe(body.error.details.requestId);
 });
 
 it('reads booking detail and customer booking list through verified identity', async () => {

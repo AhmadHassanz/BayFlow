@@ -4,11 +4,29 @@ BayFlow follows a vehicle repair from customer booking through inspection,
 estimates, parts, repair, quality control and collection. It supports customers,
 owners, service advisors, technicians, parts staff and QC inspectors.
 
-Backend phases B01–B11 are implemented. Frontend F01–F06 is implemented; F06 adds
-owner shop setup, summaries, settings, services and team management. Shared booking
-details remain read-only until the workflow phases. See [the progress ledger](docs/05-progress-ledger.md)
-for individual gates and limitations; browser/Cloud checks are separate from
-automated frontend checks.
+Backend phases B01–B11, frontend phases F01–F13 and integration phases I01–I04
+are implemented. See [the progress ledger](docs/05-progress-ledger.md) for each
+gate and its limitations.
+
+## Live demo
+
+The production application is available at
+[bay-flow-delta.vercel.app](https://bay-flow-delta.vercel.app). I04 verified the
+complete public-to-completion workflow on this deployment in clean browser
+contexts, including estimate rejection and revision, partial parts receipt, QC
+failure and rework, final QC pass, ready notification and customer pickup.
+
+The disposable demonstration identities are:
+
+- `demo-customer.a@bayflow.example.test`
+- `demo-owner.a@bayflow.example.test`
+- `demo-advisor.a@bayflow.example.test`
+- `demo-technician.a@bayflow.example.test`
+- `demo-parts.a@bayflow.example.test`
+- `demo-qc.a@bayflow.example.test`
+
+Their shared private password is intentionally not stored in Git or this README.
+Use the privately retained B11 demo credential when presenting the judge script.
 
 ## Repository layout
 
@@ -92,6 +110,28 @@ generated types unless type generation is explicitly requested. Cloud integratio
 suites are separate, create fixtures and must be run deliberately against an
 authorized test project. See [backend setup](backend/docs/database-foundation.md)
 and [verification notes](backend/docs/verification.md).
+
+## Production deployment
+
+Create the Vercel project from this repository with `frontend/` as its root and
+the Next.js framework preset. Configure `NEXT_PUBLIC_SUPABASE_URL`,
+`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` and the exact canonical HTTPS origin in
+`NEXT_PUBLIC_SITE_URL`. Configure exactly one server-only admin key only when staff
+provisioning is required: prefer `SUPABASE_SECRET_KEY`, or use the legacy
+`SUPABASE_SERVICE_ROLE_KEY`, never both and never with a `NEXT_PUBLIC_` prefix.
+
+In Supabase Auth URL Configuration, set the production Site URL to the canonical
+origin and allow the exact `<origin>/auth/callback` URL. Environment changes apply
+only to a new Vercel deployment. After deploying, run the read-only production
+smoke check from `frontend/`:
+
+```powershell
+$env:BAYFLOW_PRODUCTION_URL='https://bay-flow-delta.vercel.app'
+npm run test:smoke:production
+```
+
+The complete installation, migration, disposable demo and verification handoff is
+in [the B12 backend handoff](backend/docs/b12-backend-handoff.md).
 
 ## Migrations and seed
 

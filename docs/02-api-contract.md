@@ -41,6 +41,27 @@ Rules:
 - Rate-limit auth-adjacent, booking, and staff-creation endpoints as feasible.
 - Log safe request IDs only; never passwords or raw secrets.
 
+## B12 Production Error and Deployment Boundary
+
+Every failed `/api/v1` response includes one opaque UUID correlation value in
+`error.details.requestId` and the identical `X-Request-Id` response header. Vercel
+logs record only that ID plus the numeric status and stable error code; raw thrown
+objects, database messages, request bodies, passwords, tokens and stack traces are
+not logged or returned. Known domain errors retain their reviewed messages.
+Unexpected failures remain the generic `500 INTERNAL_ERROR` response.
+
+All application responses set `X-Content-Type-Options: nosniff`,
+`X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, and a
+Permissions Policy disabling camera, microphone and geolocation. B12 adds no CORS
+allowlist: mutations continue to require the exact same-origin `Origin` header.
+Client resource requests keep their 15-second abort behavior; the complete public
+judge workflow is allowed a separate 20-minute end-to-end test budget.
+
+The production smoke command requires an exact approved HTTPS hostname and checks
+the landing page, public directory envelope, safe invalid-query response,
+unauthenticated private route, security headers and request correlation. It never
+accepts credentials and performs no database writes.
+
 ## Endpoint Inventory
 
 | Method + route | Inputs / output | Authorization |

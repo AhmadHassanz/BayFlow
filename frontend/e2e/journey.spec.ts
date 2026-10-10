@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { demoShop, hasDemoCredentials, login, confirm, openRecord, capture, requireDemoWrites } from './helpers';
 
 test('real seeded-role booking, rejection/revision, QC failure/rework and pickup persist across reload', async ({ browser }, info) => {
+  test.setTimeout(process.env.BAYFLOW_I04_PUBLIC === '1' ? 20 * 60_000 : 180_000);
   test.skip(process.env.BAYFLOW_E2E_DEMO_WRITES !== '1', 'Explicit demo-write opt-in is required. This test leaves a real completed QA booking.');
   test.skip(!hasDemoCredentials(), 'Configure private B11 demo credentials.'); requireDemoWrites();
   const contexts = await Promise.all(Array.from({ length: 6 }, () => browser.newContext({ viewport: info.project.use.viewport, timezoneId: 'Asia/Karachi' })));
